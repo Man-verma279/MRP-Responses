@@ -1,7 +1,5 @@
 // Determine API Base URL: If loaded via file:/// or static server, point to http://localhost:3000
-const API_BASE = (window.location.protocol === 'file:' || !window.location.port) 
-    ? 'http://localhost:3000' 
-    : '';
+const API_BASE = window.location.protocol === 'file:' ? 'http://localhost:3000' : '';
 
 let adminToken = localStorage.getItem('mrp_admin_token') || sessionStorage.getItem('mrp_admin_token');
 let currentPage = 1;
@@ -61,7 +59,7 @@ async function handleAdminLogin(e) {
         }
     } catch (err) {
         console.error('Login request error:', err);
-        errEl.innerHTML = `<strong>Network / Connection Error:</strong> Cannot reach research server at <code>${API_BASE || window.location.origin}</code>.<br><span style="color:#94a3b8; font-size:0.78rem;">Please make sure the backend server is running on port 3000 (<code>npm start</code> or <code>node backend/server.js</code>), or open <a href="http://localhost:3000/admin" style="color:#38bdf8; text-decoration:underline;">http://localhost:3000/admin</a> in your browser.</span>`;
+        errEl.innerHTML = `<strong>Connection Error:</strong> Could not authenticate with research server.<br><span style="color:#94a3b8; font-size:0.78rem;">Please verify server status or try again. (${err.message})</span>`;
         errEl.style.display = 'block';
     }
 }

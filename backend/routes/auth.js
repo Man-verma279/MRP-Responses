@@ -69,22 +69,29 @@ router.post('/admin/login', async (req, res) => {
         const inputUser = username || 'admin';
         const expectedPass = process.env.ADMIN_PASSWORD || DEFAULT_PASSWORD;
 
-        // Query database admin_users
-        const userRows = await query(
-            "SELECT id, username, password_hash, display_name FROM admin_users WHERE username = ?;",
-            [inputUser]
-        );
-
+        // Check credentials against database or default fallback
         let isValid = false;
-        let displayName = 'Research Supervisor';
+        let displayName = 'MBA Research Controller (Man Machya)';
 
-        if (userRows.length > 0) {
-            if (userRows[0].password_hash === password || password === expectedPass) {
+        try {
+            const userRows = await query(
+                "SELECT id, username, password_hash, display_name FROM admin_users WHERE username = ?;",
+                [inputUser]
+            );
+
+            if (userRows.length > 0) {
+                if (userRows[0].password_hash === password || password === expectedPass) {
+                    isValid = true;
+                    displayName = userRows[0].display_name || displayName;
+                }
+            } else if (password === expectedPass) {
                 isValid = true;
-                displayName = userRows[0].display_name;
             }
-        } else if (password === expectedPass) {
-            isValid = true;
+        } catch (dbErr) {
+            console.warn('[AUTH] Database query warning, falling back to direct credential check:', dbErr.message);
+            if (password === expectedPass) {
+                isValid = true;
+            }
         }
 
         if (!isValid) {

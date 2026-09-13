@@ -48,7 +48,13 @@ const COLUMN_HEADERS = [
 
 // Ensure directories exist
 function ensureDirs() {
-    if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+    try {
+        if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+        if (!fs.existsSync(EXPORTS_DIR)) fs.mkdirSync(EXPORTS_DIR, { recursive: true });
+    } catch (e) {
+        // Read-only filesystem in serverless
+    }
+});
     if (!fs.existsSync(EXPORTS_DIR)) fs.mkdirSync(EXPORTS_DIR, { recursive: true });
 }
 

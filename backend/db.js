@@ -1,15 +1,40 @@
 // ==============================================================================
 // DATABASE ABSTRACTION LAYER (backend/db.js)
 // Supports local SQLite3 (sql.js / WASM) with zero native dependencies
-// and persistent cloud SQLite (Turso / libSQL) for Vercel serverless deployments.
+// and persistent /tmp execution for Vercel serverless deployments.
 // ==============================================================================
 
 const fs = require('fs');
 const path = require('path');
 const initSqlJs = require('sql.js');
 
-const DB_PATH = process.env.DATABASE_PATH || path.join(__dirname, '../database/research.sqlite3');
-const SCHEMA_PATH = path.join(__dirname, '../database/schema.sql');
+const isServerless = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
+
+// Candidate locations for database file
+const BUNDLED_DB_LOCATIONS = [
+    path.join(__dirname, 'research.sqlite3'),
+    path.join(__dirname, '../database/research.sqlite3'),
+    path.join(process.cwd(), 'database/research.sqlite3'),
+    path.join(process.cwd(), 'research.sqlite3')
+];
+
+const SCHEMA_LOCATIONS = [
+    path.join(__dirname, 'schema.sql'),
+    path.join(__dirname, '../database/schema.sql'),
+    path.join(process.cwd(), 'database/schema.sql')
+];
+
+const WASM_LOCATIONS = [
+    path.join(__dirname, 'sql-wasm.wasm'),
+    path.join(__dirname, '../node_modules/sql.js/dist/sql-wasm.wasm'),
+    path.join(process.cwd(), 'node_modules/sql.js/dist/sql-wasm.wasm'),
+    path.join(process.cwd(), 'sql-wasm.wasm')
+];
+
+// In serverless, only /tmp is writable
+const ACTIVE_DB_PATH = isServerless 
+    ? path.join('/tmp', 'research.sqlite3')
+    : (process.env.DATABASE_PATH || path.join(__dirname, '../database/research.sqlite3'));
 
 let dbInstance = null;
 let SQL = null;
@@ -18,27 +43,96 @@ let SQL = null;
 async function getDb() {
     if (dbInstance) return dbInstance;
 
+    // 1. Initialize sql.js WASM engine
     if (!SQL) {
-        SQL = await initSqlJs();
+        let wasmBinary = null;
+        for (const loc of WASM_LOCATIONS) {
+            if (fs.existsSync(loc)) {
+                try {
+                    wasmBinary = fs.readFileSync(loc);
+                    break;
+                } catch (e) {}
+            }
+        }
+        if (wasmBinary) {
+            SQL = await initSqlJs({ wasmBinary });
+        } else {
+            SQL = await initSqlJs();
+        }
     }
 
-    // Ensure database directory exists
-    const dbDir = path.dirname(DB_PATH);
-    if (!fs.existsSync(dbDir)) {
-        fs.mkdirSync(dbDir, { recursive: true });
+    // 2. Ensure destination directory exists safely
+    try {
+        const dbDir = path.dirname(ACTIVE_DB_PATH);
+        if (!fs.existsSync(dbDir)) {
+            fs.mkdirSync(dbDir, { recursive: true });
+        }
+    } catch (e) {
+        // Ignore read-only errors on serverless
     }
 
-    if (fs.existsSync(DB_PATH)) {
-        const fileBuffer = fs.readFileSync(DB_PATH);
-        dbInstance = new SQL.Database(fileBuffer);
+    // 3. If in serverless and active DB does not exist in /tmp, copy from bundled location
+    if (isServerless && !fs.existsSync(ACTIVE_DB_PATH)) {
+        for (const bundledLoc of BUNDLED_DB_LOCATIONS) {
+            if (fs.existsSync(bundledLoc)) {
+                try {
+                    fs.copyFileSync(bundledLoc, ACTIVE_DB_PATH);
+                    break;
+                } catch (e) {}
+            }
+        }
+    }
+
+    // 4. Load database from disk or create in-memory
+    if (fs.existsSync(ACTIVE_DB_PATH)) {
+        try {
+            const fileBuffer = fs.readFileSync(ACTIVE_DB_PATH);
+            dbInstance = new SQL.Database(fileBuffer);
+        } catch (e) {
+            console.error('[DB] Failed to read existing database file:', e.message);
+            dbInstance = new SQL.Database();
+        }
     } else {
-        dbInstance = new SQL.Database();
-        // Run initial schema if database file does not exist yet
-        if (fs.existsSync(SCHEMA_PATH)) {
-            const schemaSql = fs.readFileSync(SCHEMA_PATH, 'utf8');
-            dbInstance.exec(schemaSql);
+        let loaded = false;
+        for (const bundledLoc of BUNDLED_DB_LOCATIONS) {
+            if (fs.existsSync(bundledLoc)) {
+                try {
+                    const fileBuffer = fs.readFileSync(bundledLoc);
+                    dbInstance = new SQL.Database(fileBuffer);
+                    loaded = true;
+                    persistToFile();
+                    break;
+                } catch (e) {}
+            }
+        }
+        if (!loaded) {
+            dbInstance = new SQL.Database();
+            for (const schemaLoc of SCHEMA_LOCATIONS) {
+                if (fs.existsSync(schemaLoc)) {
+                    try {
+                        const schemaSql = fs.readFileSync(schemaLoc, 'utf8');
+                        dbInstance.exec(schemaSql);
+                        persistToFile();
+                        break;
+                    } catch (e) {}
+                }
+            }
+        }
+    }
+
+    // 5. Ensure admin user exists in the database
+    try {
+        const adminCheck = dbInstance.exec("SELECT id FROM admin_users WHERE username = 'admin';");
+        if (!adminCheck || adminCheck.length === 0 || !adminCheck[0].values || adminCheck[0].values.length === 0) {
+            const defaultPass = process.env.ADMIN_PASSWORD || 'admin123';
+            dbInstance.run(
+                "INSERT INTO admin_users (username, password_hash, display_name, role) VALUES (?, ?, ?, ?);",
+                ['admin', defaultPass, 'MBA Research Controller (Man Machya)', 'superadmin']
+            );
             persistToFile();
         }
+    } catch (e) {
+        // Safe check
     }
 
     return dbInstance;
@@ -50,9 +144,9 @@ function persistToFile() {
     try {
         const data = dbInstance.export();
         const buffer = Buffer.from(data);
-        fs.writeFileSync(DB_PATH, buffer);
+        fs.writeFileSync(ACTIVE_DB_PATH, buffer);
     } catch (err) {
-        console.error('[DB] Error persisting SQLite database to disk:', err.message);
+        console.warn('[DB] Warning: Could not persist SQLite database to disk:', err.message);
     }
 }
 
@@ -111,5 +205,5 @@ module.exports = {
     run,
     exec,
     persistToFile,
-    DB_PATH
+    DB_PATH: ACTIVE_DB_PATH
 };

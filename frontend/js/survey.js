@@ -1,7 +1,5 @@
 // Determine API Base URL: If loaded via file:/// or static server, point to http://localhost:3000
-const API_BASE = (window.location.protocol === 'file:' || !window.location.port) 
-    ? 'http://localhost:3000' 
-    : '';
+const API_BASE = window.location.protocol === 'file:' ? 'http://localhost:3000' : '';
 
 let currentStep = 1;
 const totalSteps = 6;
