@@ -115,7 +115,7 @@ router.post('/admin/login', async (req, res) => {
 
     } catch (err) {
         console.error('[AUTH] Login error:', err);
-        return res.status(500).json({ success: false, error: 'Server error during authentication.' });
+        return res.status(500).json({ success: false, error: 'Server error during authentication.', message: err.message });
     }
 });
 

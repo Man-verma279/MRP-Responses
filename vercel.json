@@ -1,23 +1,9 @@
 {
   "version": 2,
-  "functions": {
-    "backend/server.js": {
-      "includeFiles": [
-        "backend/**",
-        "database/**"
-      ]
-    }
-  },
   "builds": [
     {
       "src": "backend/server.js",
-      "use": "@vercel/node",
-      "config": {
-        "includeFiles": [
-          "backend/**",
-          "database/**"
-        ]
-      }
+      "use": "@vercel/node"
     },
     {
       "src": "public/**/*",
