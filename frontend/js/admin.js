@@ -1,7 +1,7 @@
-// ==============================================================================
-// ADMIN DASHBOARD CLIENT CONTROLLER (public/js/admin.js)
-// Authentication, Live SQLite Data Fetching, Interactive Charts, and Modal Viewer
-// ==============================================================================
+// Determine API Base URL: If loaded via file:/// or static server, point to http://localhost:3000
+const API_BASE = (window.location.protocol === 'file:' || !window.location.port) 
+    ? 'http://localhost:3000' 
+    : '';
 
 let adminToken = localStorage.getItem('mrp_admin_token') || sessionStorage.getItem('mrp_admin_token');
 let currentPage = 1;
@@ -38,7 +38,7 @@ async function handleAdminLogin(e) {
     errEl.style.display = 'none';
 
     try {
-        const res = await fetch('/api/admin/login', {
+        const res = await fetch(`${API_BASE}/api/admin/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ username, password })
@@ -61,7 +61,7 @@ async function handleAdminLogin(e) {
         }
     } catch (err) {
         console.error('Login request error:', err);
-        errEl.innerText = 'Network error contacting server.';
+        errEl.innerHTML = `<strong>Network / Connection Error:</strong> Cannot reach research server at <code>${API_BASE || window.location.origin}</code>.<br><span style="color:#94a3b8; font-size:0.78rem;">Please make sure the backend server is running on port 3000 (<code>npm start</code> or <code>node backend/server.js</code>), or open <a href="http://localhost:3000/admin" style="color:#38bdf8; text-decoration:underline;">http://localhost:3000/admin</a> in your browser.</span>`;
         errEl.style.display = 'block';
     }
 }
@@ -98,7 +98,7 @@ async function loadDashboardData(isSilent = false) {
     if (!adminToken) return;
 
     try {
-        const statsRes = await fetch('/api/admin/stats', {
+        const statsRes = await fetch(`${API_BASE}/api/admin/stats`, {
             headers: { 'Authorization': `Bearer ${adminToken}` }
         });
 
@@ -293,7 +293,7 @@ async function loadResponsesTable(page = 1) {
     if (payment) queryParams.append('payment', payment);
 
     try {
-        const res = await fetch(`/api/admin/responses?${queryParams.toString()}`, {
+        const res = await fetch(`${API_BASE}/api/admin/responses?${queryParams.toString()}`, {
             headers: { 'Authorization': `Bearer ${adminToken}` }
         });
 
@@ -393,7 +393,7 @@ async function viewResponseDetail(respCode) {
     if (!adminToken) return;
 
     try {
-        const res = await fetch(`/api/admin/responses/${respCode}`, {
+        const res = await fetch(`${API_BASE}/api/admin/responses/${respCode}`, {
             headers: { 'Authorization': `Bearer ${adminToken}` }
         });
         const data = await res.json();
@@ -490,7 +490,7 @@ function closeModal() {
 async function exportData(format) {
     if (!adminToken) return;
     try {
-        const res = await fetch(`/api/admin/export/${format}?token=${encodeURIComponent(adminToken)}`, {
+        const res = await fetch(`${API_BASE}/api/admin/export/${format}?token=${encodeURIComponent(adminToken)}`, {
             headers: { 'Authorization': `Bearer ${adminToken}` }
         });
         if (!res.ok) {
@@ -509,7 +509,7 @@ async function exportData(format) {
         window.URL.revokeObjectURL(url);
     } catch (err) {
         console.error('Export download error:', err);
-        window.open(`/api/admin/export/${format}?token=${encodeURIComponent(adminToken)}`, '_blank');
+        window.open(`${API_BASE}/api/admin/export/${format}?token=${encodeURIComponent(adminToken)}`, '_blank');
     }
 }
 
@@ -517,7 +517,7 @@ async function exportData(format) {
 async function triggerServerSync() {
     if (!adminToken) return;
     try {
-        const res = await fetch('/api/admin/refresh-exports', {
+        const res = await fetch(`${API_BASE}/api/admin/refresh-exports`, {
             method: 'POST',
             headers: { 'Authorization': `Bearer ${adminToken}` }
         });
@@ -562,7 +562,7 @@ function openAddModal() {
 async function openEditModal(respCode) {
     if (!adminToken) return;
     try {
-        const res = await fetch(`/api/admin/responses/${respCode}`, {
+        const res = await fetch(`${API_BASE}/api/admin/responses/${respCode}`, {
             headers: { 'Authorization': `Bearer ${adminToken}` }
         });
         const data = await res.json();
@@ -657,7 +657,7 @@ async function handleCrudSubmit(e) {
     const method = isEdit ? 'PUT' : 'POST';
 
     try {
-        const res = await fetch(url, {
+        const res = await fetch(`${API_BASE}${url}`, {
             method: method,
             headers: {
                 'Content-Type': 'application/json',
@@ -686,7 +686,7 @@ async function deleteResponse(respCode) {
     if (!ok) return;
 
     try {
-        const res = await fetch(`/api/admin/responses/${respCode}`, {
+        const res = await fetch(`${API_BASE}/api/admin/responses/${respCode}`, {
             method: 'DELETE',
             headers: { 'Authorization': `Bearer ${adminToken}` }
         });

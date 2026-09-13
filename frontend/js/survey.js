@@ -1,7 +1,7 @@
-// ==============================================================================
-// PUBLIC SURVEY CLIENT-SIDE CONTROLLER (public/js/survey.js)
-// Multi-step validation, submission handling, and social media sharing
-// ==============================================================================
+// Determine API Base URL: If loaded via file:/// or static server, point to http://localhost:3000
+const API_BASE = (window.location.protocol === 'file:' || !window.location.port) 
+    ? 'http://localhost:3000' 
+    : '';
 
 let currentStep = 1;
 const totalSteps = 6;
@@ -176,7 +176,7 @@ document.getElementById('surveyForm').addEventListener('submit', async (e) => {
     spinner.style.display = 'inline-block';
 
     try {
-        const res = await fetch('/api/responses', {
+        const res = await fetch(`${API_BASE}/api/responses`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
