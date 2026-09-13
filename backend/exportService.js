@@ -54,8 +54,6 @@ function ensureDirs() {
     } catch (e) {
         // Read-only filesystem in serverless
     }
-});
-    if (!fs.existsSync(EXPORTS_DIR)) fs.mkdirSync(EXPORTS_DIR, { recursive: true });
 }
 
 // Convert an array of row objects into formatted dataset array with human-readable headers
