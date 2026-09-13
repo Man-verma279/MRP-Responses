@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Research Dashboard | MBA Major Research Project</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+
+<!-- AUTHENTICATION OVERLAY -->
+<div class="auth-overlay" id="authOverlay">
+    <div class="login-card">
+        <div class="login-logo">
+            <svg width="28" height="28" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/>
+            </svg>
+        </div>
+        <h2 class="login-title">Research Controller Access</h2>
+        <p class="login-desc">Protected academic administrator dashboard for survey data analytics and raw response export.</p>
+        
+        <form id="adminLoginForm" onsubmit="handleAdminLogin(event)">
+            <div class="form-group">
+                <label class="form-label">Username</label>
+                <input type="text" id="loginUsername" class="form-input" value="admin" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Password</label>
+                <input type="password" id="loginPassword" class="form-input" placeholder="Enter password (default: admin123)" required>
+            </div>
+            <div id="loginError" style="display: none; color: var(--accent-crimson); font-size: 0.82rem; margin-bottom: 14px;">
+                Invalid credentials.
+            </div>
+            <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center; padding: 12px;">
+                Authenticate & Enter Dashboard
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- MAIN HEADER -->
+<header class="admin-header">
+    <div class="header-brand">
+        <div class="brand-icon">
+            <svg width="22" height="22" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M1 11a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1v-3zm6-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1V7zm6-5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1V2z"/>
+            </svg>
+        </div>
+        <div>
+            <h1 class="brand-title">Impulse Buying Research Survey | Admin Analytics Engine</h1>
+            <p class="brand-sub">MBA Major Research Project | Malwa Institute of Science & Technology, Indore (DAVV)</p>
+        </div>
+    </div>
+    <div class="header-actions">
+        <div class="db-badge">
+            <span class="pulse-dot"></span>
+            <span>SQLite Active (database/research.sqlite3)</span>
+        </div>
+        <span style="font-size: 0.85rem; color: var(--text-muted);" id="userDisplayBadge">Research Controller</span>
+        <button class="btn btn-outline" onclick="handleLogout()" style="padding: 6px 12px;">
+            Logout
+        </button>
+    </div>
+</header>
+
+<!-- MAIN CONTENT CONTAINER -->
+<main class="admin-container">
+
+    <!-- Information & Control Toolbar -->
+    <div class="mode-banner">
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <div style="width: 12px; height: 12px; background: var(--accent-emerald); border-radius: 50%;"></div>
+            <div>
+                <strong style="font-size: 0.95rem; color: #FFFFFF;">Primary Research Fieldwork Live Hub</strong>
+                <p style="font-size: 0.78rem; color: var(--text-muted);">
+                    Sampling focus: Indore Urban Hub (42.5%), Rest of MP (22.5%), Major North India (21.0%), Other States (14.0%).
+                </p>
+            </div>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <label style="font-size: 0.78rem; color: var(--text-muted); display: flex; align-items: center; gap: 6px;">
+                <input type="checkbox" id="autoPollCheck" onchange="toggleAutoPolling()" checked>
+                Auto-refresh (15s)
+            </label>
+            <button class="btn btn-outline" onclick="loadDashboardData()">
+                <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/><path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/></svg>
+                Refresh Data
+            </button>
+            <a href="/" target="_blank" class="btn btn-outline">
+                <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1.002 1.002 0 0 0-.154.199 2 2 0 0 1 .861 3.337L7.336 10.99a2 2 0 0 1-2.828-2.828l1.372-1.372a2 2 0 0 1 .835-.458z"/></svg>
+                Open Public Survey
+            </a>
+        </div>
+    </div>
+
+    <!-- Executive KPI Deck -->
+    <section class="kpi-grid">
+        <div class="kpi-card" style="border-bottom: 3px solid var(--primary-color);">
+            <div class="kpi-title">Total Submissions</div>
+            <div class="kpi-value" id="kpiTotal">0</div>
+            <div class="kpi-sub" id="kpiTotalSub">Primary research records in SQLite</div>
+        </div>
+        <div class="kpi-card" style="border-bottom: 3px solid var(--accent-emerald);">
+            <div class="kpi-title">Today's Submissions</div>
+            <div class="kpi-value" id="kpiToday" style="color: var(--accent-emerald);">0</div>
+            <div class="kpi-sub">Recorded today</div>
+        </div>
+        <div class="kpi-card" style="border-bottom: 3px solid var(--accent-purple);">
+            <div class="kpi-title">This Week</div>
+            <div class="kpi-value" id="kpiWeek">0</div>
+            <div class="kpi-sub">Past 7 days</div>
+        </div>
+        <div class="kpi-card" style="border-bottom: 3px solid var(--accent-gold);">
+            <div class="kpi-title">This Month</div>
+            <div class="kpi-value" id="kpiMonth">0</div>
+            <div class="kpi-sub">Past 30 days</div>
+        </div>
+        <div class="kpi-card" style="border-bottom: 3px solid #38BDF8;">
+            <div class="kpi-title">States Represented</div>
+            <div class="kpi-value" id="kpiStates">0</div>
+            <div class="kpi-sub">Indian States / UTs</div>
+        </div>
+        <div class="kpi-card" style="border-bottom: 3px solid #EC4899;">
+            <div class="kpi-title">Cities Represented</div>
+            <div class="kpi-value" id="kpiCities">0</div>
+            <div class="kpi-sub">Indore, Bhopal, NCR, etc.</div>
+        </div>
+    </section>
+
+    <!-- Analytics Charts Grid -->
+    <section class="charts-grid-2">
+        <div class="chart-card">
+            <div class="chart-card-header">
+                <span class="chart-heading">Regional Sample Distribution</span>
+                <span style="font-size: 0.75rem; color: var(--text-muted);">Indore Hub vs. MP vs. North</span>
+            </div>
+            <div class="chart-container-box">
+                <canvas id="chartRegions"></canvas>
+            </div>
+        </div>
+
+        <div class="chart-card">
+            <div class="chart-card-header">
+                <span class="chart-heading">Channel Preference Split</span>
+                <span style="font-size: 0.75rem; color: var(--text-muted);">Online vs. Offline Dominance</span>
+            </div>
+            <div class="chart-container-box">
+                <canvas id="chartChannels"></canvas>
+            </div>
+        </div>
+    </section>
+
+    <section class="charts-grid-3">
+        <div class="chart-card">
+            <div class="chart-card-header">
+                <span class="chart-heading">Dominant Trigger Ratings</span>
+                <span style="font-size: 0.75rem; color: var(--text-muted);">Mean Likert (1-5)</span>
+            </div>
+            <div class="chart-container-box">
+                <canvas id="chartTriggers"></canvas>
+            </div>
+        </div>
+
+        <div class="chart-card">
+            <div class="chart-card-header">
+                <span class="chart-heading">Payment Instrument Share</span>
+                <span style="font-size: 0.75rem; color: var(--text-muted);">UPI vs. Cards vs. Cash</span>
+            </div>
+            <div class="chart-container-box">
+                <canvas id="chartPayments"></canvas>
+            </div>
+        </div>
+
+        <div class="chart-card">
+            <div class="chart-card-header">
+                <span class="chart-heading">Submissions Timeline</span>
+                <span style="font-size: 0.75rem; color: var(--text-muted);">Fieldwork Cadence</span>
+            </div>
+            <div class="chart-container-box">
+                <canvas id="chartTimeline"></canvas>
+            </div>
+        </div>
+    </section>
+
+    <!-- Interactive Responses Table -->
+    <section class="table-panel">
+        <div class="table-toolbar">
+            <div class="filters-row">
+                <input type="text" id="searchFilter" class="search-box" placeholder="Search Response ID, City, State..." oninput="handleFilterChange()">
+                <select id="stateFilter" class="filter-select" onchange="handleFilterChange()">
+                    <option value="">All States</option>
+                    <option value="Madhya Pradesh">Madhya Pradesh</option>
+                    <option value="Delhi NCR">Delhi NCR</option>
+                    <option value="Uttar Pradesh">Uttar Pradesh</option>
+                    <option value="Rajasthan">Rajasthan</option>
+                    <option value="Punjab / Haryana / Chandigarh">Punjab / Haryana</option>
+                    <option value="Maharashtra">Maharashtra</option>
+                </select>
+                <select id="channelFilter" class="filter-select" onchange="handleFilterChange()">
+                    <option value="">All Channels</option>
+                    <option value="Online">Online</option>
+                    <option value="Offline">Offline</option>
+                    <option value="Hybrid">Hybrid</option>
+                </select>
+                <select id="paymentFilter" class="filter-select" onchange="handleFilterChange()">
+                    <option value="">All Payments</option>
+                    <option value="UPI">UPI</option>
+                    <option value="BNPL">BNPL</option>
+                    <option value="Cash">Cash</option>
+                    <option value="Card">Card</option>
+                </select>
+            </div>
+
+            <div class="actions-row">
+                <button class="btn btn-success" onclick="openAddModal()" style="display: inline-flex; align-items: center; gap: 6px; background: #10B981; color: #FFFFFF; border: none;">
+                    <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/></svg>
+                    + Add New Response
+                </button>
+                <button class="btn btn-primary" onclick="exportData('excel')">
+                    <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/></svg>
+                    Download Excel (.xlsx)
+                </button>
+                <button class="btn btn-outline" onclick="exportData('csv')">
+                    <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/></svg>
+                    Download CSV
+                </button>
+                <button class="btn btn-outline" onclick="triggerServerSync()">
+                    Sync Raw Files
+                </button>
+            </div>
+        </div>
+
+        <div style="overflow-x: auto;">
+            <table id="responsesTable">
+                <thead>
+                    <tr>
+                        <th>Response ID</th>
+                        <th>Respondent Name</th>
+                        <th>Date & Time</th>
+                        <th>City / Region</th>
+                        <th>Demographics</th>
+                        <th>Channel</th>
+                        <th>Payment Mode</th>
+                        <th>Unplanned Spend</th>
+                        <th>Regret (1-5)</th>
+                        <th>Data Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="responsesTableBody">
+                    <tr>
+                        <td colspan="11" style="text-align: center; color: var(--text-muted); padding: 24px;">Loading SQLite responses...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="pagination-bar" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-top: 16px; padding: 12px 16px; background: rgba(15, 23, 42, 0.6); border-radius: 8px; border: 1px solid var(--border-color);">
+            <span id="paginationInfo" style="color: var(--text-muted); font-size: 0.85rem;">Showing 0 to 0 of 0 responses</span>
+            <div class="page-controls" style="display: flex; gap: 8px; align-items: center;">
+                <button class="btn btn-outline" id="btnFirstPage" onclick="goToPage(1)" style="padding: 6px 10px;" title="First Page">&laquo;&laquo;</button>
+                <button class="btn btn-outline" id="btnPrevPage" onclick="changePage(-1)" style="padding: 6px 12px;">&laquo; Previous</button>
+                <span id="pageIndicator" style="padding: 6px 14px; font-weight: 600; background: var(--card-bg); border-radius: 4px; border: 1px solid var(--border-color); font-size: 0.85rem;">Page 1 of 1</span>
+                <button class="btn btn-outline" id="btnNextPage" onclick="changePage(1)" style="padding: 6px 12px;">Next &raquo;</button>
+                <button class="btn btn-outline" id="btnLastPage" onclick="goToLastPage()" style="padding: 6px 10px;" title="Last Page">&raquo;&raquo;</button>
+                <select id="pageSizeSelect" class="filter-select" onchange="handlePageSizeChange(this.value)" style="margin-left: 10px; padding: 6px 10px; font-size: 0.82rem;">
+                    <option value="15" selected>15 / page</option>
+                    <option value="25">25 / page</option>
+                    <option value="50">50 / page</option>
+                    <option value="100">100 / page</option>
+                </select>
+            </div>
+        </div>
+    </section>
+
+</main>
+
+<!-- RESPONSE DETAIL MODAL -->
+<div class="modal-overlay" id="responseModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title" id="modalRespCode">Response Detail: RESP-XXXX</h3>
+            <button class="modal-close" onclick="closeModal()">&times;</button>
+        </div>
+        <div class="modal-body" id="modalBodyContent">
+            <!-- Populated dynamically -->
+        </div>
+    </div>
+</div>
+
+<!-- ADD / EDIT RESPONSE MODAL (CRUD) -->
+<div class="modal-overlay" id="crudModal" style="display: none;">
+    <div class="modal-content" style="max-width: 860px; width: 95%; max-height: 90vh;">
+        <div class="modal-header">
+            <h3 class="modal-title" id="crudModalTitle">Add New Survey Response</h3>
+            <button class="modal-close" onclick="closeCrudModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="crudForm" onsubmit="handleCrudSubmit(event)">
+                <input type="hidden" id="crudEditId" name="id">
+                
+                <h4 style="color: var(--primary-color); font-size: 0.85rem; text-transform: uppercase; margin-bottom: 12px; letter-spacing: 0.04em;">Section 1: Screening & Demographics</h4>
+                <div class="crud-grid">
+                    <div class="form-group">
+                        <label class="form-label" for="crud_full_name">Respondent Full Name *</label>
+                        <input type="text" id="crud_full_name" class="login-input" placeholder="e.g. Man Machya" required style="width: 100%;">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="crud_age_group">Age Group *</label>
+                        <select id="crud_age_group" class="filter-select" required style="width: 100%;">
+                            <option value="18 – 24 years (Student / Young Starter)">18 – 24 years (Student / Young Starter)</option>
+                            <option value="25 – 34 years (Working Professional / Early Career)">25 – 34 years (Working Professional / Early Career)</option>
+                            <option value="35 – 49 years">35 – 49 years</option>
+                            <option value="50 years and above">50 years and above</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="crud_gender">Gender *</label>
+                        <select id="crud_gender" class="filter-select" required style="width: 100%;">
+                            <option value="Female">Female</option>
+                            <option value="Male">Male</option>
+                            <option value="Prefer not to say">Prefer not to say</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="crud_city">City *</label>
+                        <input type="text" id="crud_city" class="login-input" placeholder="e.g. Indore (Vijay Nagar)" required style="width: 100%;">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="crud_state">State *</label>
+                        <select id="crud_state" class="filter-select" required style="width: 100%;">
+                            <option value="Madhya Pradesh">Madhya Pradesh</option>
+                            <option value="Delhi NCR">Delhi NCR</option>
+                            <option value="Uttar Pradesh">Uttar Pradesh</option>
+                            <option value="Rajasthan">Rajasthan</option>
+                            <option value="Punjab / Haryana / Chandigarh">Punjab / Haryana / Chandigarh</option>
+                            <option value="Maharashtra">Maharashtra</option>
+                            <option value="Other South / East Indian State">Other South / East Indian State</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="crud_occupation">Occupation *</label>
+                        <select id="crud_occupation" class="filter-select" required style="width: 100%;">
+                            <option value="Student">Student</option>
+                            <option value="Salaried Professional / Corporate Employee">Salaried Professional / Corporate Employee</option>
+                            <option value="Business Owner / Self-Employed">Business Owner / Self-Employed</option>
+                            <option value="Homemaker / Other">Homemaker / Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="crud_income_group">Monthly Income *</label>
+                        <select id="crud_income_group" class="filter-select" required style="width: 100%;">
+                            <option value="Below Rs. 30,000">Below Rs. 30,000</option>
+                            <option value="Rs. 30,000 to Rs. 60,000">Rs. 30,000 to Rs. 60,000</option>
+                            <option value="Rs. 60,001 to Rs. 1,00,000">Rs. 60,001 to Rs. 1,00,000</option>
+                            <option value="Above Rs. 1,00,000">Above Rs. 1,00,000</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="crud_preferred_channel">Preferred Channel *</label>
+                        <select id="crud_preferred_channel" class="filter-select" required style="width: 100%;">
+                            <option value="Online">Online</option>
+                            <option value="Offline">Offline</option>
+                            <option value="Hybrid">Hybrid</option>
+                        </select>
+                    </div>
+                </div>
+
+                <h4 style="color: var(--primary-color); font-size: 0.85rem; text-transform: uppercase; margin: 18px 0 12px 0; letter-spacing: 0.04em;">Section 2: Shopping Frequency & Payments</h4>
+                <div class="crud-grid">
+                    <div class="form-group">
+                        <label class="form-label" for="crud_q07">Online Impulse Freq</label>
+                        <select id="crud_q07" class="filter-select" style="width: 100%;">
+                            <option value="Rarely (Less than once a month)">Rarely (&lt; once a month)</option>
+                            <option value="1 to 2 times a month">1 to 2 times a month</option>
+                            <option value="3 to 4 times a month">3 to 4 times a month</option>
+                            <option value="Very frequently (5+ times a month)">Very frequently (5+ times a month)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="crud_q08">Offline Impulse Freq</label>
+                        <select id="crud_q08" class="filter-select" style="width: 100%;">
+                            <option value="Rarely (Less than once a month)">Rarely (&lt; once a month)</option>
+                            <option value="1 to 2 times a month">1 to 2 times a month</option>
+                            <option value="3 to 4 times a month">3 to 4 times a month</option>
+                            <option value="Very frequently (5+ times a month)">Very frequently (5+ times a month)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="crud_q09">Typical Unplanned Spend</label>
+                        <select id="crud_q09" class="filter-select" style="width: 100%;">
+                            <option value="Under Rs. 500">Under Rs. 500</option>
+                            <option value="Rs. 500 to Rs. 1,500">Rs. 500 to Rs. 1,500</option>
+                            <option value="Rs. 1,501 to Rs. 3,000">Rs. 1,501 to Rs. 3,000</option>
+                            <option value="Above Rs. 3,000">Above Rs. 3,000</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="crud_q19">Primary Payment Method</label>
+                        <select id="crud_q19" class="filter-select" style="width: 100%;">
+                            <option value="UPI (Google Pay, PhonePe, Paytm QR)">UPI (Google Pay, PhonePe, Paytm QR)</option>
+                            <option value="Buy Now Pay Later (BNPL)">Buy Now Pay Later (BNPL)</option>
+                            <option value="Debit Card / Credit Card">Debit Card / Credit Card</option>
+                            <option value="Cash on Delivery (COD) / Physical Cash">Cash on Delivery / Physical Cash</option>
+                        </select>
+                    </div>
+                </div>
+
+                <h4 style="color: var(--primary-color); font-size: 0.85rem; text-transform: uppercase; margin: 18px 0 12px 0; letter-spacing: 0.04em;">Sections 3 to 6: Likert Scale Ratings (1 to 5)</h4>
+                <div class="crud-grid-small">
+                    <div class="form-group"><label class="form-label">Q10: Need for Touch</label><input type="number" id="crud_q10" min="1" max="5" class="login-input" value="4"></div>
+                    <div class="form-group"><label class="form-label">Q11: In-Store Displays</label><input type="number" id="crud_q11" min="1" max="5" class="login-input" value="4"></div>
+                    <div class="form-group"><label class="form-label">Q12: Checkout Placement</label><input type="number" id="crud_q12" min="1" max="5" class="login-input" value="3"></div>
+                    <div class="form-group"><label class="form-label">Q13: Salesperson Advice</label><input type="number" id="crud_q13" min="1" max="5" class="login-input" value="3"></div>
+                    <div class="form-group"><label class="form-label">Q14: AI Recommendations</label><input type="number" id="crud_q14" min="1" max="5" class="login-input" value="5"></div>
+                    <div class="form-group"><label class="form-label">Q15: Countdown Timers</label><input type="number" id="crud_q15" min="1" max="5" class="login-input" value="4"></div>
+                    <div class="form-group"><label class="form-label">Q16: Scarcity FOMO</label><input type="number" id="crud_q16" min="1" max="5" class="login-input" value="4"></div>
+                    <div class="form-group"><label class="form-label">Q17: Social Proof</label><input type="number" id="crud_q17" min="1" max="5" class="login-input" value="5"></div>
+                    <div class="form-group"><label class="form-label">Q18: Push Alerts</label><input type="number" id="crud_q18" min="1" max="5" class="login-input" value="4"></div>
+                    <div class="form-group"><label class="form-label">Q20: UPI Pain Relief</label><input type="number" id="crud_q20" min="1" max="5" class="login-input" value="5"></div>
+                    <div class="form-group"><label class="form-label">Q21: BNPL Spend Lift</label><input type="number" id="crud_q21" min="1" max="5" class="login-input" value="4"></div>
+                    <div class="form-group"><label class="form-label">Q22: Online Regret</label><input type="number" id="crud_q22" min="1" max="5" class="login-input" value="4"></div>
+                    <div class="form-group"><label class="form-label">Q23: Offline Satisfaction</label><input type="number" id="crud_q23" min="1" max="5" class="login-input" value="4"></div>
+                    <div class="form-group"><label class="form-label">Q24: Return Frequency</label><input type="number" id="crud_q24" min="1" max="5" class="login-input" value="3"></div>
+                    <div class="form-group"><label class="form-label">Q25: Deceptive Timers Trust Loss</label><input type="number" id="crud_q25" min="1" max="5" class="login-input" value="5"></div>
+                </div>
+
+                <div style="margin-top: 24px; display: flex; justify-content: flex-end; gap: 12px; flex-wrap: wrap;">
+                    <button type="button" class="btn btn-outline" onclick="closeCrudModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="btnSaveCrud">Save to Database</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="js/admin.js"></script>
+</body>
+</html>

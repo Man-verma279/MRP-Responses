@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consumer Shopping Survey: Online vs. In-Store Impulse Buying</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/survey.css">
+</head>
+<body>
+
+<div class="survey-wrapper">
+    <!-- Sticky Progress Header -->
+    <div class="progress-container" id="progressContainer">
+        <div class="progress-info">
+            <span id="stepLabel">Section 1 of 6: About You</span>
+            <span id="progressPercent">17% Complete</span>
+        </div>
+        <div class="progress-bar-track">
+            <div class="progress-bar-fill" id="progressBarFill" style="width: 16.6%;"></div>
+        </div>
+    </div>
+
+    <!-- Header Card -->
+    <header class="header-card" id="formHeaderCard">
+        <div class="header-accent"></div>
+        <div class="header-content">
+            <span class="university-badge">Devi Ahilya Vishwavidyalaya | MIST MBA MRP</span>
+            <h1 class="form-title">Consumer Shopping Habits: Online vs. In-Store Impulse Buying Survey</h1>
+            <p class="form-description">
+                Dear Participant,<br>
+                This academic study is conducted as part of an MBA Major Research Project at Malwa Institute of Science & Technology, Indore (affiliated to Devi Ahilya Vishwavidyalaya). The objective is to understand unplanned shopping habits across physical retail stores and digital shopping apps.
+            </p>
+            <p class="form-description" style="margin-top: 8px; font-size: 0.85rem; color: #4B5563;">
+                <em>Your participation is entirely voluntary, anonymous, and confidential. Estimated completion time: 3 to 4 minutes.</em>
+            </p>
+            <p class="mandatory-notice">* Indicates required question</p>
+        </div>
+    </header>
+
+    <!-- FORM CONTAINER -->
+    <form id="surveyForm" novalidate>
+
+        <!-- SECTION 1: ABOUT YOU (Demographics) -->
+        <div class="form-section" id="section1" data-step="1">
+            <div class="section-card">
+                <h2 class="section-title">Section 1: About You</h2>
+                <p class="section-desc">Basic demographic and geographic information for regional classification.</p>
+            </div>
+
+            <!-- Q00: Full Name -->
+            <div class="question-card" id="card_full_name">
+                <div class="question-header">
+                    <span class="question-title">1. Full Name <span class="req-star">*</span></span>
+                </div>
+                <input type="text" name="full_name" id="full_name" class="text-input" placeholder="Enter your full name" autocomplete="name">
+                <span class="error-text">Please enter your full name.</span>
+            </div>
+
+            <!-- Q01: Age Group -->
+            <div class="question-card" id="card_age_group">
+                <div class="question-header">
+                    <span class="question-title">2. What is your Age Group? <span class="req-star">*</span></span>
+                </div>
+                <div class="radio-group">
+                    <label class="radio-label">
+                        <input type="radio" name="age_group" value="18 – 24 years (Student / Young Starter)">
+                        <span class="radio-text">18 – 24 years (Student / Young Starter)</span>
+                    </label>
+                    <label class="radio-label">
+                        <input type="radio" name="age_group" value="25 – 34 years (Working Professional / Early Career)">
+                        <span class="radio-text">25 – 34 years (Working Professional / Early Career)</span>
+                    </label>
+                    <label class="radio-label">
+                        <input type="radio" name="age_group" value="35 – 49 years">
+                        <span class="radio-text">35 – 49 years</span>
+                    </label>
+                    <label class="radio-label">
+                        <input type="radio" name="age_group" value="50 years and above">
+                        <span class="radio-text">50 years and above</span>
+                    </label>
+                </div>
+                <span class="error-text">Please select your age group.</span>
+            </div>
+
+            <!-- Q02: Gender -->
+            <div class="question-card" id="card_gender">
+                <div class="question-header">
+                    <span class="question-title">2. Gender <span class="req-star">*</span></span>
+                </div>
+                <div class="radio-group">
+                    <label class="radio-label">
+                        <input type="radio" name="gender" value="Female">
+                        <span class="radio-text">Female</span>
+                    </label>
+                    <label class="radio-label">
+                        <input type="radio" name="gender" value="Male">
+                        <span class="radio-text">Male</span>
+                    </label>
+                    <label class="radio-label">
+                        <input type="radio" name="gender" value="Prefer not to say">
+                        <span class="radio-text">Prefer not to say</span>
+                    </label>
+                </div>
+                <span class="error-text">Please select your gender.</span>
+            </div>
+
+            <!-- Q03: City -->
+            <div class="question-card" id="card_city">
+                <div class="question-header">
+                    <span class="question-title">3. Which City are you currently living in? <span class="req-star">*</span></span>
+                </div>
+                <input type="text" name="city" class="text-input" placeholder="e.g. Indore, Bhopal, Delhi NCR, Jaipur, Lucknow..." autocomplete="address-level2">
+                <span class="error-text">Please enter your city.</span>
+            </div>
+
+            <!-- Q04: State -->
+            <div class="question-card" id="card_state">
+                <div class="question-header">
+                    <span class="question-title">4. Which State / Region? <span class="req-star">*</span></span>
+                </div>
+                <select name="state" class="select-input">
+                    <option value="">-- Select State / Region --</option>
+                    <option value="Madhya Pradesh">Madhya Pradesh (Indore / Bhopal / Malwa / Central)</option>
+                    <option value="Delhi NCR">Delhi NCR</option>
+                    <option value="Uttar Pradesh">Uttar Pradesh</option>
+                    <option value="Rajasthan">Rajasthan</option>
+                    <option value="Punjab / Haryana / Chandigarh">Punjab / Haryana / Chandigarh</option>
+                    <option value="Maharashtra">Maharashtra (Mumbai / Pune)</option>
+                    <option value="Gujarat">Gujarat</option>
+                    <option value="Other North Indian State">Other North Indian State</option>
+                    <option value="Other South / East Indian State">Other South / East Indian State</option>
+                </select>
+                <span class="error-text">Please select your state/region.</span>
+            </div>
+
+            <!-- Q05: Occupation -->
+            <div class="question-card" id="card_occupation">
+                <div class="question-header">
+                    <span class="question-title">5. Current Occupation <span class="req-star">*</span></span>
+                </div>
+                <div class="radio-group">
+                    <label class="radio-label">
+                        <input type="radio" name="occupation" value="Student">
+                        <span class="radio-text">Student</span>
+                    </label>
+                    <label class="radio-label">
+                        <input type="radio" name="occupation" value="Salaried Professional / Corporate Employee">
+                        <span class="radio-text">Salaried Professional / Corporate Employee</span>
+                    </label>
+                    <label class="radio-label">
+                        <input type="radio" name="occupation" value="Business Owner / Self-Employed">
+                        <span class="radio-text">Business Owner / Self-Employed</span>
+                    </label>
+                    <label class="radio-label">
+                        <input type="radio" name="occupation" value="Homemaker / Other">
+                        <span class="radio-text">Homemaker / Other</span>
+                    </label>
+                </div>
+                <span class="error-text">Please select your occupation.</span>
+            </div>
+
+            <!-- Q06: Income (Optional) -->
+            <div class="question-card" id="card_income_group">
+                <div class="question-header">
+                    <span class="question-title">6. Approximate Monthly Family Income</span>
+                </div>
+                <div class="radio-group">
+                    <label class="radio-label">
+                        <input type="radio" name="income_group" value="Below Rs. 30,000">
+                        <span class="radio-text">Below ₹30,000</span>
+                    </label>
+                    <label class="radio-label">
+                        <input type="radio" name="income_group" value="Rs. 30,000 to Rs. 60,000">
+                        <span class="radio-text">₹30,000 to ₹60,000</span>
+                    </label>
+                    <label class="radio-label">
+                        <input type="radio" name="income_group" value="Rs. 60,001 to Rs. 1,00,000">
+                        <span class="radio-text">₹60,001 to ₹1,00,000</span>
+                    </label>
+                    <label class="radio-label">
+                        <input type="radio" name="income_group" value="Above Rs. 1,00,000">
+                        <span class="radio-text">Above ₹1,00,000</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 2: GENERAL SHOPPING HABITS -->
+        <div class="form-section" id="section2" data-step="2" style="display: none;">
+            <div class="section-card">
+                <h2 class="section-title">Section 2: Your General Shopping Habits</h2>
+                <p class="section-desc">Baseline unplanned buying frequencies and typical monetary commitment.</p>
+            </div>
+
+            <!-- Q07: Online Impulse Freq -->
+            <div class="question-card" id="card_q07_online_impulse_freq">
+                <div class="question-header">
+                    <span class="question-title">7. How often do you make unplanned / impulse purchases online (buying something you didn't originally intend to buy)? <span class="req-star">*</span></span>
+                </div>
+                <div class="radio-group">
+                    <label class="radio-label">
+                        <input type="radio" name="q07_online_impulse_freq" value="Rarely (Less than once a month)">
+                        <span class="radio-text">Rarely (Less than once a month)</span>
+                    </label>
+                    <label class="radio-label">
+                        <input type="radio" name="q07_online_impulse_freq" value="1 to 2 times a month">
+                        <span class="radio-text">1 to 2 times a month</span>
+                    </label>
+                    <label class="radio-label">
+                        <input type="radio" name="q07_online_impulse_freq" value="3 to 4 times a month">
+                        <span class="radio-text">3 to 4 times a month</span>
+                    </label>
+                    <label class="radio-label">
+                        <input type="radio" name="q07_online_impulse_freq" value="Very frequently (5+ times a month)">
+                        <span class="radio-text">Very frequently (5+ times a month)</span>
+                    </label>
+                </div>
+                <span class="error-text">Please answer this question.</span>
+            </div>
+
+            <!-- Q08: Offline Impulse Freq -->
+            <div class="question-card" id="card_q08_offline_impulse_freq">
+                <div class="question-header">
+                    <span class="question-title">8. How often do you make unplanned / impulse purchases in physical stores (malls, local markets, supermarkets)? <span class="req-star">*</span></span>
+                </div>
+                <div class="radio-group">
+                    <label class="radio-label">
+                        <input type="radio" name="q08_offline_impulse_freq" value="Rarely (Less than once a month)">
+                        <span class="radio-text">Rarely (Less than once a month)</span>
+                    </label>
+                    <label class="radio-label">
+                        <input type="radio" name="q08_offline_impulse_freq" value="1 to 2 times a month">
+                        <span class="radio-text">1 to 2 times a month</span>
+                    </label>
+                    <label class="radio-label">
+                        <input type="radio" name="q08_offline_impulse_freq" value="3 to 4 times a month">
+                        <span class="radio-text">3 to 4 times a month</span>
+                    </label>
+                    <label class="radio-label">
+                        <input type="radio" name="q08_offline_impulse_freq" value="Very frequently (5+ times a month)">
+                        <span class="radio-text">Very frequently (5+ times a month)</span>
+                    </label>
+                </div>
+                <span class="error-text">Please answer this question.</span>
+            </div>
+
+            <!-- Q09: Typical Spend -->
+            <div class="question-card" id="card_q09_avg_unplanned_spend">
+                <div class="question-header">
+                    <span class="question-title">9. On average, how much do you typically spend on a single unplanned purchase? <span class="req-star">*</span></span>
+                </div>
+                <div class="radio-group">
+                    <label class="radio-label">
+                        <input type="radio" name="q09_avg_unplanned_spend" value="Under Rs. 500">
+                        <span class="radio-text">Under ₹500 (Snacks, small accessories, quick commerce items)</span>
+                    </label>
+                    <label class="radio-label">
+                        <input type="radio" name="q09_avg_unplanned_spend" value="Rs. 500 to Rs. 1,500">
+                        <span class="radio-text">₹500 to ₹1,500 (T-shirt, cosmetics, footwear, home essentials)</span>
+                    </label>
+                    <label class="radio-label">
+                        <input type="radio" name="q09_avg_unplanned_spend" value="Rs. 1,501 to Rs. 3,000">
+                        <span class="radio-text">₹1,501 to ₹3,000 (Branded fashion, electronics accessories)</span>
+                    </label>
+                    <label class="radio-label">
+                        <input type="radio" name="q09_avg_unplanned_spend" value="Above Rs. 3,000">
+                        <span class="radio-text">Above ₹3,000 (Premium fashion, luxury goods, gadgets)</span>
+                    </label>
+                </div>
+                <span class="error-text">Please select your average spend.</span>
+            </div>
+        </div>
+
+        <!-- SECTION 3: IN-STORE (OFFLINE) SENSORY EXPERIENCE -->
+        <div class="form-section" id="section3" data-step="3" style="display: none;">
+            <div class="section-card">
+                <h2 class="section-title">Section 3: In-Store (Offline) Shopping Experience</h2>
+                <p class="section-desc">Please rate how much you agree with each statement on a scale of 1 (Strongly Disagree) to 5 (Strongly Agree).</p>
+            </div>
+
+            <!-- Q10: Need for Touch -->
+            <div class="question-card" id="card_q10_need_for_touch">
+                <div class="question-header">
+                    <span class="question-title">10. "Touching and holding a product in my hands (feeling the fabric, weight, or quality) makes me want to buy it immediately." <span class="req-star">*</span></span>
+                </div>
+                <div class="likert-scale-container">
+                    <div class="likert-labels">
+                        <span>1 = Strongly Disagree</span>
+                        <span>5 = Strongly Agree</span>
+                    </div>
+                    <div class="likert-options">
+                        <label class="likert-item"><input type="radio" name="q10_need_for_touch" value="1"><div class="likert-btn">1</div></label>
+                        <label class="likert-item"><input type="radio" name="q10_need_for_touch" value="2"><div class="likert-btn">2</div></label>
+                        <label class="likert-item"><input type="radio" name="q10_need_for_touch" value="3"><div class="likert-btn">3</div></label>
+                        <label class="likert-item"><input type="radio" name="q10_need_for_touch" value="4"><div class="likert-btn">4</div></label>
+                        <label class="likert-item"><input type="radio" name="q10_need_for_touch" value="5"><div class="likert-btn">5</div></label>
+                    </div>
+                </div>
+                <span class="error-text">Please rate this statement.</span>
+            </div>
+
+            <!-- Q11: Visual Displays -->
+            <div class="question-card" id="card_q11_visual_displays">
+                <div class="question-header">
+                    <span class="question-title">11. "Attractive store window displays, mannequins, and good store lighting often make me walk in and buy extra items." <span class="req-star">*</span></span>
+                </div>
+                <div class="likert-scale-container">
+                    <div class="likert-labels">
+                        <span>1 = Strongly Disagree</span>
+                        <span>5 = Strongly Agree</span>
+                    </div>
+                    <div class="likert-options">
+                        <label class="likert-item"><input type="radio" name="q11_visual_displays" value="1"><div class="likert-btn">1</div></label>
+                        <label class="likert-item"><input type="radio" name="q11_visual_displays" value="2"><div class="likert-btn">2</div></label>
+                        <label class="likert-item"><input type="radio" name="q11_visual_displays" value="3"><div class="likert-btn">3</div></label>
+                        <label class="likert-item"><input type="radio" name="q11_visual_displays" value="4"><div class="likert-btn">4</div></label>
+                        <label class="likert-item"><input type="radio" name="q11_visual_displays" value="5"><div class="likert-btn">5</div></label>
+                    </div>
+                </div>
+                <span class="error-text">Please rate this statement.</span>
+            </div>
+
+            <!-- Q12: Checkout Placement -->
+            <div class="question-card" id="card_q12_checkout_placement">
+                <div class="question-header">
+                    <span class="question-title">12. "I often pick up chocolates, snacks, or small items kept near the billing/cashier counter while waiting in queue." <span class="req-star">*</span></span>
+                </div>
+                <div class="likert-scale-container">
+                    <div class="likert-labels">
+                        <span>1 = Strongly Disagree</span>
+                        <span>5 = Strongly Agree</span>
+                    </div>
+                    <div class="likert-options">
+                        <label class="likert-item"><input type="radio" name="q12_checkout_placement" value="1"><div class="likert-btn">1</div></label>
+                        <label class="likert-item"><input type="radio" name="q12_checkout_placement" value="2"><div class="likert-btn">2</div></label>
+                        <label class="likert-item"><input type="radio" name="q12_checkout_placement" value="3"><div class="likert-btn">3</div></label>
+                        <label class="likert-item"><input type="radio" name="q12_checkout_placement" value="4"><div class="likert-btn">4</div></label>
+                        <label class="likert-item"><input type="radio" name="q12_checkout_placement" value="5"><div class="likert-btn">5</div></label>
+                    </div>
+                </div>
+                <span class="error-text">Please rate this statement.</span>
+            </div>
+
+            <!-- Q13: Salesperson Advice -->
+            <div class="question-card" id="card_q13_salesperson_advice">
+                <div class="question-header">
+                    <span class="question-title">13. "Helpful recommendations from a store salesperson make me feel more confident about buying unplanned items." <span class="req-star">*</span></span>
+                </div>
+                <div class="likert-scale-container">
+                    <div class="likert-labels">
+                        <span>1 = Strongly Disagree</span>
+                        <span>5 = Strongly Agree</span>
+                    </div>
+                    <div class="likert-options">
+                        <label class="likert-item"><input type="radio" name="q13_salesperson_advice" value="1"><div class="likert-btn">1</div></label>
+                        <label class="likert-item"><input type="radio" name="q13_salesperson_advice" value="2"><div class="likert-btn">2</div></label>
+                        <label class="likert-item"><input type="radio" name="q13_salesperson_advice" value="3"><div class="likert-btn">3</div></label>
+                        <label class="likert-item"><input type="radio" name="q13_salesperson_advice" value="4"><div class="likert-btn">4</div></label>
+                        <label class="likert-item"><input type="radio" name="q13_salesperson_advice" value="5"><div class="likert-btn">5</div></label>
+                    </div>
+                </div>
+                <span class="error-text">Please rate this statement.</span>
+            </div>
+        </div>
+
+        <!-- SECTION 4: ONLINE SHOPPING & SOCIAL MEDIA TRIGGERS -->
+        <div class="form-section" id="section4" data-step="4" style="display: none;">
+            <div class="section-card">
+                <h2 class="section-title">Section 4: Online Shopping & Digital Triggers</h2>
+                <p class="section-desc">Rating AI algorithms, countdown urgency, scarcity alerts, and phone notifications (1 = Strongly Disagree, 5 = Strongly Agree).</p>
+            </div>
+
+            <!-- Q14: AI Personalization -->
+            <div class="question-card" id="card_q14_ai_recommendations">
+                <div class="question-header">
+                    <span class="question-title">14. "Personalized recommendations ('Suggested for You' or 'Frequently Bought Together') accurately match my taste and prompt unplanned orders." <span class="req-star">*</span></span>
+                </div>
+                <div class="likert-scale-container">
+                    <div class="likert-labels"><span>1 = Strongly Disagree</span><span>5 = Strongly Agree</span></div>
+                    <div class="likert-options">
+                        <label class="likert-item"><input type="radio" name="q14_ai_recommendations" value="1"><div class="likert-btn">1</div></label>
+                        <label class="likert-item"><input type="radio" name="q14_ai_recommendations" value="2"><div class="likert-btn">2</div></label>
+                        <label class="likert-item"><input type="radio" name="q14_ai_recommendations" value="3"><div class="likert-btn">3</div></label>
+                        <label class="likert-item"><input type="radio" name="q14_ai_recommendations" value="4"><div class="likert-btn">4</div></label>
+                        <label class="likert-item"><input type="radio" name="q14_ai_recommendations" value="5"><div class="likert-btn">5</div></label>
+                    </div>
+                </div>
+                <span class="error-text">Please rate this statement.</span>
+            </div>
+
+            <!-- Q15: Countdown Timers -->
+            <div class="question-card" id="card_q15_countdown_timers">
+                <div class="question-header">
+                    <span class="question-title">15. "Limited-time countdown timers ('Sale ends in 15 mins!') make me feel rushed and urge me to buy before the deal disappears." <span class="req-star">*</span></span>
+                </div>
+                <div class="likert-scale-container">
+                    <div class="likert-labels"><span>1 = Strongly Disagree</span><span>5 = Strongly Agree</span></div>
+                    <div class="likert-options">
+                        <label class="likert-item"><input type="radio" name="q15_countdown_timers" value="1"><div class="likert-btn">1</div></label>
+                        <label class="likert-item"><input type="radio" name="q15_countdown_timers" value="2"><div class="likert-btn">2</div></label>
+                        <label class="likert-item"><input type="radio" name="q15_countdown_timers" value="3"><div class="likert-btn">3</div></label>
+                        <label class="likert-item"><input type="radio" name="q15_countdown_timers" value="4"><div class="likert-btn">4</div></label>
+                        <label class="likert-item"><input type="radio" name="q15_countdown_timers" value="5"><div class="likert-btn">5</div></label>
+                    </div>
+                </div>
+                <span class="error-text">Please rate this statement.</span>
+            </div>
+
+            <!-- Q16: Scarcity FOMO -->
+            <div class="question-card" id="card_q16_scarcity_fomo">
+                <div class="question-header">
+                    <span class="question-title">16. "Alerts like 'Only 1 item left in stock!' or '10 people viewing now' trigger FOMO (fear of missing out) that speeds up my checkout." <span class="req-star">*</span></span>
+                </div>
+                <div class="likert-scale-container">
+                    <div class="likert-labels"><span>1 = Strongly Disagree</span><span>5 = Strongly Agree</span></div>
+                    <div class="likert-options">
+                        <label class="likert-item"><input type="radio" name="q16_scarcity_fomo" value="1"><div class="likert-btn">1</div></label>
+                        <label class="likert-item"><input type="radio" name="q16_scarcity_fomo" value="2"><div class="likert-btn">2</div></label>
+                        <label class="likert-item"><input type="radio" name="q16_scarcity_fomo" value="3"><div class="likert-btn">3</div></label>
+                        <label class="likert-item"><input type="radio" name="q16_scarcity_fomo" value="4"><div class="likert-btn">4</div></label>
+                        <label class="likert-item"><input type="radio" name="q16_scarcity_fomo" value="5"><div class="likert-btn">5</div></label>
+                    </div>
+                </div>
+                <span class="error-text">Please rate this statement.</span>
+            </div>
+
+            <!-- Q17: Social Proof Reviews -->
+            <div class="question-card" id="card_q17_social_proof_reviews">
+                <div class="question-header">
+                    <span class="question-title">17. "Seeing high customer ratings, photo reviews, or Instagram/YouTube influencer recommendations convinces me to buy on impulse." <span class="req-star">*</span></span>
+                </div>
+                <div class="likert-scale-container">
+                    <div class="likert-labels"><span>1 = Strongly Disagree</span><span>5 = Strongly Agree</span></div>
+                    <div class="likert-options">
+                        <label class="likert-item"><input type="radio" name="q17_social_proof_reviews" value="1"><div class="likert-btn">1</div></label>
+                        <label class="likert-item"><input type="radio" name="q17_social_proof_reviews" value="2"><div class="likert-btn">2</div></label>
+                        <label class="likert-item"><input type="radio" name="q17_social_proof_reviews" value="3"><div class="likert-btn">3</div></label>
+                        <label class="likert-item"><input type="radio" name="q17_social_proof_reviews" value="4"><div class="likert-btn">4</div></label>
+                        <label class="likert-item"><input type="radio" name="q17_social_proof_reviews" value="5"><div class="likert-btn">5</div></label>
+                    </div>
+                </div>
+                <span class="error-text">Please rate this statement.</span>
+            </div>
+
+            <!-- Q18: Push Notifications -->
+            <div class="question-card" id="card_q18_push_notifications">
+                <div class="question-header">
+                    <span class="question-title">18. "App push notifications on my phone (flash sales, cart reminders) frequently prompt me to open shopping apps and place orders." <span class="req-star">*</span></span>
+                </div>
+                <div class="likert-scale-container">
+                    <div class="likert-labels"><span>1 = Strongly Disagree</span><span>5 = Strongly Agree</span></div>
+                    <div class="likert-options">
+                        <label class="likert-item"><input type="radio" name="q18_push_notifications" value="1"><div class="likert-btn">1</div></label>
+                        <label class="likert-item"><input type="radio" name="q18_push_notifications" value="2"><div class="likert-btn">2</div></label>
+                        <label class="likert-item"><input type="radio" name="q18_push_notifications" value="3"><div class="likert-btn">3</div></label>
+                        <label class="likert-item"><input type="radio" name="q18_push_notifications" value="4"><div class="likert-btn">4</div></label>
+                        <label class="likert-item"><input type="radio" name="q18_push_notifications" value="5"><div class="likert-btn">5</div></label>
+                    </div>
+                </div>
+                <span class="error-text">Please rate this statement.</span>
+            </div>
+        </div>
+
+        <!-- SECTION 5: PAYMENT METHODS & FINTECH SPENDING EASE -->
+        <div class="form-section" id="section5" data-step="5" style="display: none;">
+            <div class="section-card">
+                <h2 class="section-title">Section 5: Payment Methods & Spending Ease</h2>
+                <p class="section-desc">How digital payment mechanisms influence spending friction and basket size.</p>
+            </div>
+
+            <!-- Q19: Payment Mode -->
+            <div class="question-card" id="card_q19_primary_payment_mode">
+                <div class="question-header">
+                    <span class="question-title">19. What is your most frequent payment method when shopping? <span class="req-star">*</span></span>
+                </div>
+                <div class="radio-group">
+                    <label class="radio-label">
+                        <input type="radio" name="q19_primary_payment_mode" value="UPI (Google Pay, PhonePe, Paytm QR)">
+                        <span class="radio-text">UPI (Google Pay, PhonePe, Paytm QR)</span>
+                    </label>
+                    <label class="radio-label">
+                        <input type="radio" name="q19_primary_payment_mode" value="Cash on Delivery (COD) / Physical Cash">
+                        <span class="radio-text">Cash on Delivery (COD) / Physical Cash</span>
+                    </label>
+                    <label class="radio-label">
+                        <input type="radio" name="q19_primary_payment_mode" value="Debit Card / Credit Card">
+                        <span class="radio-text">Debit Card / Credit Card</span>
+                    </label>
+                    <label class="radio-label">
+                        <input type="radio" name="q19_primary_payment_mode" value="Buy Now Pay Later (BNPL)">
+                        <span class="radio-text">Buy Now Pay Later (BNPL: LazyPay, Simpl, Amazon Pay Later, Flipkart Pay Later)</span>
+                    </label>
+                </div>
+                <span class="error-text">Please select your primary payment method.</span>
+            </div>
+
+            <!-- Q20: UPI Pain of Paying -->
+            <div class="question-card" id="card_q20_upi_pain_reduction">
+                <div class="question-header">
+                    <span class="question-title">20. "Paying through UPI (1-click scan or PIN) is so effortless that it makes spending feel much less painful than handing over physical cash notes." <span class="req-star">*</span></span>
+                </div>
+                <div class="likert-scale-container">
+                    <div class="likert-labels"><span>1 = Strongly Disagree</span><span>5 = Strongly Agree</span></div>
+                    <div class="likert-options">
+                        <label class="likert-item"><input type="radio" name="q20_upi_pain_reduction" value="1"><div class="likert-btn">1</div></label>
+                        <label class="likert-item"><input type="radio" name="q20_upi_pain_reduction" value="2"><div class="likert-btn">2</div></label>
+                        <label class="likert-item"><input type="radio" name="q20_upi_pain_reduction" value="3"><div class="likert-btn">3</div></label>
+                        <label class="likert-item"><input type="radio" name="q20_upi_pain_reduction" value="4"><div class="likert-btn">4</div></label>
+                        <label class="likert-item"><input type="radio" name="q20_upi_pain_reduction" value="5"><div class="likert-btn">5</div></label>
+                    </div>
+                </div>
+                <span class="error-text">Please rate this statement.</span>
+            </div>
+
+            <!-- Q21: BNPL Spend Lift -->
+            <div class="question-card" id="card_q21_bnpl_spend_encouragement">
+                <div class="question-header">
+                    <span class="question-title">21. "Buy Now Pay Later (BNPL) or easy credit options encourage me to make bigger or more frequent unplanned purchases because I don't have to pay immediately." <span class="req-star">*</span></span>
+                </div>
+                <div class="likert-scale-container">
+                    <div class="likert-labels"><span>1 = Strongly Disagree</span><span>5 = Strongly Agree</span></div>
+                    <div class="likert-options">
+                        <label class="likert-item"><input type="radio" name="q21_bnpl_spend_encouragement" value="1"><div class="likert-btn">1</div></label>
+                        <label class="likert-item"><input type="radio" name="q21_bnpl_spend_encouragement" value="2"><div class="likert-btn">2</div></label>
+                        <label class="likert-item"><input type="radio" name="q21_bnpl_spend_encouragement" value="3"><div class="likert-btn">3</div></label>
+                        <label class="likert-item"><input type="radio" name="q21_bnpl_spend_encouragement" value="4"><div class="likert-btn">4</div></label>
+                        <label class="likert-item"><input type="radio" name="q21_bnpl_spend_encouragement" value="5"><div class="likert-btn">5</div></label>
+                    </div>
+                </div>
+                <span class="error-text">Please rate this statement.</span>
+            </div>
+        </div>
+
+        <!-- SECTION 6: AFTER PURCHASE (REGRET, RETURNS & TRUST) -->
+        <div class="form-section" id="section6" data-step="6" style="display: none;">
+            <div class="section-card">
+                <h2 class="section-title">Section 6: Post-Purchase Outcomes, Regret & Trust</h2>
+                <p class="section-desc">Examining post-purchase cognitive remorse, returns, and platform trust (1 = Strongly Disagree, 5 = Strongly Agree).</p>
+            </div>
+
+            <!-- Q22: Online Regret -->
+            <div class="question-card" id="card_q22_online_impulse_regret">
+                <div class="question-header">
+                    <span class="question-title">22. "I often feel buyer's remorse or regret after making an online impulse purchase once the initial excitement wears off." <span class="req-star">*</span></span>
+                </div>
+                <div class="likert-scale-container">
+                    <div class="likert-labels"><span>1 = Strongly Disagree</span><span>5 = Strongly Agree</span></div>
+                    <div class="likert-options">
+                        <label class="likert-item"><input type="radio" name="q22_online_impulse_regret" value="1"><div class="likert-btn">1</div></label>
+                        <label class="likert-item"><input type="radio" name="q22_online_impulse_regret" value="2"><div class="likert-btn">2</div></label>
+                        <label class="likert-item"><input type="radio" name="q22_online_impulse_regret" value="3"><div class="likert-btn">3</div></label>
+                        <label class="likert-item"><input type="radio" name="q22_online_impulse_regret" value="4"><div class="likert-btn">4</div></label>
+                        <label class="likert-item"><input type="radio" name="q22_online_impulse_regret" value="5"><div class="likert-btn">5</div></label>
+                    </div>
+                </div>
+                <span class="error-text">Please rate this statement.</span>
+            </div>
+
+            <!-- Q23: Offline Satisfaction -->
+            <div class="question-card" id="card_q23_offline_satisfaction">
+                <div class="question-header">
+                    <span class="question-title">23. "I feel noticeably more satisfied and less regretful when I buy an unplanned item in a physical store because I could touch/check it before buying." <span class="req-star">*</span></span>
+                </div>
+                <div class="likert-scale-container">
+                    <div class="likert-labels"><span>1 = Strongly Disagree</span><span>5 = Strongly Agree</span></div>
+                    <div class="likert-options">
+                        <label class="likert-item"><input type="radio" name="q23_offline_satisfaction" value="1"><div class="likert-btn">1</div></label>
+                        <label class="likert-item"><input type="radio" name="q23_offline_satisfaction" value="2"><div class="likert-btn">2</div></label>
+                        <label class="likert-item"><input type="radio" name="q23_offline_satisfaction" value="3"><div class="likert-btn">3</div></label>
+                        <label class="likert-item"><input type="radio" name="q23_offline_satisfaction" value="4"><div class="likert-btn">4</div></label>
+                        <label class="likert-item"><input type="radio" name="q23_offline_satisfaction" value="5"><div class="likert-btn">5</div></label>
+                    </div>
+                </div>
+                <span class="error-text">Please rate this statement.</span>
+            </div>
+
+            <!-- Q24: Return / Exchange Freq -->
+            <div class="question-card" id="card_q24_return_exchange_freq">
+                <div class="question-header">
+                    <span class="question-title">24. "I frequently return or exchange online impulse purchases (especially clothes, shoes, or accessories) because the actual product looked different or didn't fit." <span class="req-star">*</span></span>
+                </div>
+                <div class="likert-scale-container">
+                    <div class="likert-labels"><span>1 = Strongly Disagree</span><span>5 = Strongly Agree</span></div>
+                    <div class="likert-options">
+                        <label class="likert-item"><input type="radio" name="q24_return_exchange_freq" value="1"><div class="likert-btn">1</div></label>
+                        <label class="likert-item"><input type="radio" name="q24_return_exchange_freq" value="2"><div class="likert-btn">2</div></label>
+                        <label class="likert-item"><input type="radio" name="q24_return_exchange_freq" value="3"><div class="likert-btn">3</div></label>
+                        <label class="likert-item"><input type="radio" name="q24_return_exchange_freq" value="4"><div class="likert-btn">4</div></label>
+                        <label class="likert-item"><input type="radio" name="q24_return_exchange_freq" value="5"><div class="likert-btn">5</div></label>
+                    </div>
+                </div>
+                <span class="error-text">Please rate this statement.</span>
+            </div>
+
+            <!-- Q25: Fake Timers Loss of Trust -->
+            <div class="question-card" id="card_q25_fake_timers_loss_of_trust">
+                <div class="question-header">
+                    <span class="question-title">25. "When a shopping app uses fake countdown clocks that reset or tricky urgency alerts, I lose trust in that platform and avoid reordering." <span class="req-star">*</span></span>
+                </div>
+                <div class="likert-scale-container">
+                    <div class="likert-labels"><span>1 = Strongly Disagree</span><span>5 = Strongly Agree</span></div>
+                    <div class="likert-options">
+                        <label class="likert-item"><input type="radio" name="q25_fake_timers_loss_of_trust" value="1"><div class="likert-btn">1</div></label>
+                        <label class="likert-item"><input type="radio" name="q25_fake_timers_loss_of_trust" value="2"><div class="likert-btn">2</div></label>
+                        <label class="likert-item"><input type="radio" name="q25_fake_timers_loss_of_trust" value="3"><div class="likert-btn">3</div></label>
+                        <label class="likert-item"><input type="radio" name="q25_fake_timers_loss_of_trust" value="4"><div class="likert-btn">4</div></label>
+                        <label class="likert-item"><input type="radio" name="q25_fake_timers_loss_of_trust" value="5"><div class="likert-btn">5</div></label>
+                    </div>
+                </div>
+                <span class="error-text">Please rate this statement.</span>
+            </div>
+        </div>
+
+        <!-- Navigation Buttons -->
+        <div class="nav-toolbar">
+            <button type="button" class="btn btn-secondary" id="btnBack" style="display: none;" onclick="navigateStep(-1)">
+                <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"/></svg>
+                Back
+            </button>
+            <div style="flex-grow: 1;"></div>
+            <button type="button" class="btn btn-primary" id="btnNext" onclick="navigateStep(1)">
+                Next
+                <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/></svg>
+            </button>
+            <button type="submit" class="btn btn-primary" id="btnSubmit" style="display: none;">
+                <span id="submitBtnText">Submit Response</span>
+                <span id="submitSpinner" class="spinner" style="display: none;"></span>
+            </button>
+        </div>
+
+    </form>
+
+    <!-- SUCCESS / THANK YOU CARD -->
+    <div class="success-card" id="successCard">
+        <div class="success-icon">
+            <svg width="40" height="40" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M12.736 3.97a.733.733 0 0 1 1.047 0c.286.289.29.756.01 1.05L7.88 12.01a.733.733 0 0 1-1.065.02L3.217 8.384a.757.757 0 0 1 0-1.06.733.733 0 0 1 1.047 0l3.052 3.093 5.4-6.425a.247.247 0 0 1 .02-.022z"/>
+            </svg>
+        </div>
+        <h2 style="font-size: 1.8rem; font-weight: 800; color: #111827; margin-bottom: 8px;">Thank You!</h2>
+        <p style="color: var(--text-secondary); max-width: 540px; margin: 0 auto;">
+            Your response has been successfully recorded in our primary research database. Your insights provide essential empirical evidence for our MBA Major Research Project at Devi Ahilya Vishwavidyalaya.
+        </p>
+        <div>
+            <span class="resp-code-badge" id="displayResponseCode">RESP-2026-XXXX</span>
+        </div>
+
+        <div style="display: flex; justify-content: center; gap: 12px; margin-top: 12px;">
+            <button class="btn btn-secondary" onclick="window.location.reload();">
+                Submit Another Response
+            </button>
+        </div>
+
+        <!-- Social Media / Link Sharing Box -->
+        <div class="share-box">
+            <h4 class="share-title">Help us reach more Indian consumers — please share this survey:</h4>
+            <div class="share-buttons">
+                <button class="share-btn" onclick="copySurveyLink()">
+                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z"/><path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h3zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3z"/></svg>
+                    Copy Survey Link
+                </button>
+                <a class="share-btn whatsapp" id="shareWhatsAppBtn" target="_blank" rel="noopener noreferrer">
+                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M13.601 2.326A7.854 7.854 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.933 7.933 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.898 7.898 0 0 0 13.6 2.326zM7.994 14.521a6.573 6.573 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.557 6.557 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592z"/></svg>
+                    Share on WhatsApp
+                </a>
+                <a class="share-btn linkedin" id="shareLinkedInBtn" target="_blank" rel="noopener noreferrer">
+                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M0 1.146C0 .513.526 0 1.175 0h13.65C15.474 0 16 .513 16 1.146v13.708c0 .633-.526 1.146-1.175 1.146H1.175C.526 16 0 15.487 0 14.854V1.146zm4.943 12.248V6.169H2.542v7.225h2.401zm-1.2-8.212c.837 0 1.358-.554 1.358-1.248-.015-.709-.52-1.248-1.342-1.248-.822 0-1.359.54-1.359 1.248 0 .694.521 1.248 1.327 1.248h.016zm4.908 8.212V9.359c0-.216.016-.432.08-.586.173-.431.568-.878 1.232-.878.869 0 1.216.662 1.216 1.634v3.865h2.401V9.25c0-2.22-1.184-3.252-2.764-3.252-1.274 0-1.845.7-2.165 1.193v.025h-.016a5.54 5.54 0 0 1 .016-.025V6.169h-2.4c.03.678 0 7.225 0 7.225h2.4z"/></svg>
+                    Share on LinkedIn
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Toast element -->
+<div class="toast" id="toastMsg">Notification message</div>
+
+<script src="js/survey.js"></script>
+</body>
+</html>
