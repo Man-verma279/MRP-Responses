@@ -347,7 +347,12 @@ router.post('/admin/responses', async (req, res) => {
         ];
 
         await run(insertSql, insertParams);
-        await syncRawResponsesFiles();
+        
+        try {
+            await syncRawResponsesFiles();
+        } catch (syncErr) {
+            console.warn('[ADMIN ROUTE] Export sync warning on create:', syncErr.message);
+        }
 
         const created = await queryOne("SELECT * FROM responses WHERE response_code = ?;", [respCode]);
 
@@ -468,7 +473,12 @@ router.put('/admin/responses/:id', async (req, res) => {
         ];
 
         await run(updateSql, updateParams);
-        await syncRawResponsesFiles();
+
+        try {
+            await syncRawResponsesFiles();
+        } catch (syncErr) {
+            console.warn('[ADMIN ROUTE] Export sync warning on update:', syncErr.message);
+        }
 
         const updated = await queryOne("SELECT * FROM responses WHERE id = ?;", [existing.id]);
 
@@ -487,7 +497,7 @@ router.put('/admin/responses/:id', async (req, res) => {
 
     } catch (err) {
         console.error('[ADMIN ROUTE] Error updating response:', err);
-        return res.status(500).json({ success: false, error: 'Database error updating response.' });
+        return res.status(500).json({ success: false, error: 'Database error updating response: ' + (err.message || 'Unknown error') });
     }
 });
 
@@ -506,8 +516,13 @@ router.delete('/admin/responses/:id', async (req, res) => {
             return res.status(404).json({ success: false, error: `Response '${idParam}' not found.` });
         }
 
-        await run("DELETE FROM responses WHERE id = ?;", [existing.id]);
-        await syncRawResponsesFiles();
+        await run("DELETE FROM responses WHERE id = ? OR response_code = ?;", [existing.id, existing.response_code]);
+
+        try {
+            await syncRawResponsesFiles();
+        } catch (syncErr) {
+            console.warn('[ADMIN ROUTE] Export sync warning on delete:', syncErr.message);
+        }
 
         // Cloud Persistence Sync (Tombstone so cold start doesn't resurrect it)
         try {
@@ -524,7 +539,7 @@ router.delete('/admin/responses/:id', async (req, res) => {
 
     } catch (err) {
         console.error('[ADMIN ROUTE] Error deleting response:', err);
-        return res.status(500).json({ success: false, error: 'Database error deleting response.' });
+        return res.status(500).json({ success: false, error: 'Database error deleting response: ' + (err.message || 'Unknown error') });
     }
 });
 

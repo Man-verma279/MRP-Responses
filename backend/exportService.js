@@ -8,8 +8,9 @@ const path = require('path');
 const XLSX = require('xlsx');
 const { query } = require('./db');
 
-const DATA_DIR = path.join(__dirname, '../data');
-const EXPORTS_DIR = path.join(__dirname, '../exports');
+const isServerless = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
+const DATA_DIR = isServerless ? path.join('/tmp', 'data') : path.join(__dirname, '../data');
+const EXPORTS_DIR = isServerless ? path.join('/tmp', 'exports') : path.join(__dirname, '../exports');
 
 // Friendly Excel Column Headers mapping
 const COLUMN_HEADERS = [
@@ -52,7 +53,7 @@ function ensureDirs() {
         if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
         if (!fs.existsSync(EXPORTS_DIR)) fs.mkdirSync(EXPORTS_DIR, { recursive: true });
     } catch (e) {
-        // Read-only filesystem in serverless
+        // Safe check for read-only environment
     }
 }
 
@@ -73,50 +74,51 @@ function formatRowsForExport(rows) {
 
 // Synchronize all genuine SQLite responses into data/raw_responses.xlsx & data/raw_responses.csv
 async function syncRawResponsesFiles() {
-    ensureDirs();
-    
-    // Fetch ONLY real participant responses (is_demo = 0)
-    const rows = await query(
-        "SELECT * FROM responses WHERE is_demo = 0 ORDER BY id ASC;"
-    );
+    try {
+        ensureDirs();
+        
+        // Fetch ONLY real participant responses (is_demo = 0)
+        const rows = await query(
+            "SELECT * FROM responses WHERE is_demo = 0 ORDER BY id ASC;"
+        );
 
-    const formattedData = formatRowsForExport(rows);
+        const formattedData = formatRowsForExport(rows);
 
-    // 1. Write CSV
-    const csvPath = path.join(DATA_DIR, 'raw_responses.csv');
-    if (formattedData.length === 0) {
-        // Write header only
-        const headersOnly = COLUMN_HEADERS.map(c => '"' + c.title + '"').join(',');
-        fs.writeFileSync(csvPath, headersOnly + '\n', 'utf8');
-    } else {
-        const ws = XLSX.utils.json_to_sheet(formattedData);
-        const csvContent = XLSX.utils.sheet_to_csv(ws);
-        fs.writeFileSync(csvPath, csvContent, 'utf8');
+        // 1. Write CSV
+        const csvPath = path.join(DATA_DIR, 'raw_responses.csv');
+        if (formattedData.length === 0) {
+            // Write header only
+            const headersOnly = COLUMN_HEADERS.map(c => '"' + c.title + '"').join(',');
+            fs.writeFileSync(csvPath, headersOnly + '\n', 'utf8');
+        } else {
+            const ws = XLSX.utils.json_to_sheet(formattedData);
+            const csvContent = XLSX.utils.sheet_to_csv(ws);
+            fs.writeFileSync(csvPath, csvContent, 'utf8');
+        }
+
+        // 2. Write Excel XLSX
+        const xlsxPath = path.join(DATA_DIR, 'raw_responses.xlsx');
+        const latestXlsxPath = path.join(EXPORTS_DIR, 'latest_responses.xlsx');
+
+        const wb = XLSX.utils.book_new();
+        const ws = XLSX.utils.json_to_sheet(formattedData.length > 0 ? formattedData : [
+            COLUMN_HEADERS.reduce((acc, c) => { acc[c.title] = ''; return acc; }, {})
+        ]);
+
+        // Set column widths
+        const colWidths = COLUMN_HEADERS.map(c => ({ wch: Math.max(c.title.length + 2, 14) }));
+        ws['!cols'] = colWidths;
+
+        XLSX.utils.book_append_sheet(wb, ws, 'Real_Responses');
+        XLSX.writeFile(wb, xlsxPath);
+        XLSX.writeFile(wb, latestXlsxPath);
+
+        console.log(`[EXPORT] Synchronized ${rows.length} real responses`);
+        return { totalReal: rows.length, xlsxPath, csvPath };
+    } catch (fsErr) {
+        console.warn('[EXPORT] File synchronization skipped (read-only filesystem or non-critical):', fsErr.message);
+        return { totalReal: 0, skipped: true, error: fsErr.message };
     }
-
-    // 2. Write Excel XLSX
-    const xlsxPath = path.join(DATA_DIR, 'raw_responses.xlsx');
-    const latestXlsxPath = path.join(EXPORTS_DIR, 'latest_responses.xlsx');
-
-    const wb = XLSX.utils.book_new();
-    const ws = XLSX.utils.json_to_sheet(formattedData.length > 0 ? formattedData : [
-        COLUMN_HEADERS.reduce((acc, c) => { acc[c.title] = ''; return acc; }, {})
-    ]);
-
-    // Set column widths
-    const colWidths = COLUMN_HEADERS.map(c => ({ wch: Math.max(c.title.length + 2, 14) }));
-    ws['!cols'] = colWidths;
-
-    XLSX.utils.book_append_sheet(wb, ws, 'Real_Responses');
-    XLSX.writeFile(wb, xlsxPath);
-    XLSX.writeFile(wb, latestXlsxPath);
-
-    console.log(`[EXPORT] Synchronized ${rows.length} real responses to:`);
-    console.log(`  - ${xlsxPath}`);
-    console.log(`  - ${csvPath}`);
-    console.log(`  - ${latestXlsxPath}`);
-
-    return { totalReal: rows.length, xlsxPath, csvPath };
 }
 
 // Build Excel buffer on the fly for HTTP streaming downloads
