@@ -340,7 +340,7 @@
     "region_classification": "Indore Hub",
     "mp_flag": 1,
     "indore_flag": 1,
-    "occupation": "Data Architect",
+    "occupation": "Senior Principal Data Architect",
     "income_group": "Not Specified",
     "q07_online_impulse_freq": "Frequently (2-3 times a month)",
     "q08_offline_impulse_freq": "Occasionally (Once a month)",
@@ -365,6 +365,11 @@
     "q25_fake_timers_loss_of_trust": 5,
     "client_user_agent": "node",
     "created_at": "2026-09-20T12:42:49.407Z",
-    "is_deleted": false
+    "is_deleted": false,
+    "id": 629,
+    "is_demo": 0,
+    "data_source": "LIVE_RESEARCH_PARTICIPANT",
+    "ip_hash": null,
+    "updated_at": "2026-09-20T14:03:26.749Z"
   }
 ]
