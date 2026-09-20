@@ -270,5 +270,11 @@
     "response_uuid": "b63963bf-a7b2-4fa3-baa0-b5778fa7bd58",
     "is_deleted": true,
     "deleted_at": "2026-09-20T14:21:34.064Z"
+  },
+  {
+    "response_code": "RESP-2026-0206",
+    "response_uuid": "4106916a-9fdf-4e87-b10f-a0495ec070ba",
+    "is_deleted": true,
+    "deleted_at": "2026-09-20T14:58:01.031Z"
   }
 ]
