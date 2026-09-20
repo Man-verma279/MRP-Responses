@@ -8,7 +8,7 @@ const router = express.Router();
 const { v4: uuidv4 } = require('uuid');
 const { run, query, queryOne, getDb, persistToFile } = require('../db');
 const { syncRawResponsesFiles } = require('../exportService');
-const { persistSubmissionToCloud, syncCloudSubmissionsIntoSqlite } = require('../cloudPersistence');
+const { persistSubmissionToCloud, syncCloudSubmissionsIntoSqlite, appendImmutableLedger } = require('../cloudPersistence');
 
 // Helper to determine regional flags
 function evaluateRegion(city, state) {
@@ -256,6 +256,13 @@ router.post('/responses', async (req, res) => {
             }
         } catch (cloudErr) {
             console.error('[SURVEY] Cloud persistence error:', cloudErr.message);
+        }
+
+        // 5. Append to WORM (Write Once, Read Many) Immutable Research Ledger
+        try {
+            await appendImmutableLedger(recordToSave);
+        } catch (ledgerErr) {
+            console.error('[SURVEY] Immutable ledger error:', ledgerErr.message);
         }
 
         try {

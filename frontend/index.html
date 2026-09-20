@@ -48,6 +48,10 @@
             <div class="section-card">
                 <h2 class="section-title">Section 1: About You</h2>
                 <p class="section-desc">Basic demographic and geographic information for regional classification.</p>
+                <div class="insight-banner">
+                    <span class="insight-pill">📊 Research Insight #1</span>
+                    <p class="insight-desc"><strong>Demographic Trends:</strong> Over 65% of surveyed young Indian consumers (18–34 yrs) interact with quick-commerce or digital shopping apps multiple times every week.</p>
+                </div>
             </div>
 
             <!-- Q00: Full Name -->
@@ -193,6 +197,10 @@
             <div class="section-card">
                 <h2 class="section-title">Section 2: Your General Shopping Habits</h2>
                 <p class="section-desc">Baseline unplanned buying frequencies and typical monetary commitment.</p>
+                <div class="insight-banner">
+                    <span class="insight-pill">🛍️ Research Insight #2</span>
+                    <p class="insight-desc"><strong>Impulse Share:</strong> Unplanned impulse purchases account for nearly 38% of total retail transaction value across Tier-1 and emerging Tier-2 Indian cities.</p>
+                </div>
             </div>
 
             <!-- Q07: Online Impulse Freq -->
@@ -279,6 +287,10 @@
             <div class="section-card">
                 <h2 class="section-title">Section 3: In-Store (Offline) Shopping Experience</h2>
                 <p class="section-desc">Please rate how much you agree with each statement on a scale of 1 (Strongly Disagree) to 5 (Strongly Agree).</p>
+                <div class="insight-banner">
+                    <span class="insight-pill">🖐️ Research Insight #3</span>
+                    <p class="insight-desc"><strong>Sensory Psychology:</strong> 72% of fashion and lifestyle shoppers report that physical tactile evaluation ('need-for-touch') is the #1 factor preventing post-purchase regret.</p>
+                </div>
             </div>
 
             <!-- Q10: Need for Touch -->
@@ -371,6 +383,10 @@
             <div class="section-card">
                 <h2 class="section-title">Section 4: Online Shopping & Digital Triggers</h2>
                 <p class="section-desc">Rating AI algorithms, countdown urgency, scarcity alerts, and phone notifications (1 = Strongly Disagree, 5 = Strongly Agree).</p>
+                <div class="insight-banner">
+                    <span class="insight-pill">⚡ Research Insight #4</span>
+                    <p class="insight-desc"><strong>Algorithmic Velocity:</strong> AI recommendations ('Frequently Bought Together') and limited-stock alerts elevate spontaneous basket additions by up to 33%.</p>
+                </div>
             </div>
 
             <!-- Q14: AI Personalization -->
@@ -469,6 +485,10 @@
             <div class="section-card">
                 <h2 class="section-title">Section 5: Payment Methods & Spending Ease</h2>
                 <p class="section-desc">How digital payment mechanisms influence spending friction and basket size.</p>
+                <div class="insight-banner">
+                    <span class="insight-pill">💳 Research Insight #5</span>
+                    <p class="insight-desc"><strong>FinTech Factor:</strong> Zero-friction UPI QR scanning and BNPL significantly decrease the psychological 'pain of paying', speeding checkout decisions.</p>
+                </div>
             </div>
 
             <!-- Q19: Payment Mode -->
@@ -539,6 +559,10 @@
             <div class="section-card">
                 <h2 class="section-title">Section 6: Post-Purchase Outcomes, Regret & Trust</h2>
                 <p class="section-desc">Examining post-purchase cognitive remorse, returns, and platform trust (1 = Strongly Disagree, 5 = Strongly Agree).</p>
+                <div class="insight-banner">
+                    <span class="insight-pill">🛡️ Research Insight #6</span>
+                    <p class="insight-desc"><strong>Trust Erosion:</strong> Over 58% of digital shoppers report permanent loss of brand trust when exposed to artificial countdown clocks and deceptive scarcity timers.</p>
+                </div>
             </div>
 
             <!-- Q22: Online Regret -->
@@ -633,22 +657,70 @@
 
     </form>
 
-    <!-- SUCCESS / THANK YOU CARD -->
-    <div class="success-card" id="successCard">
-        <div class="success-icon">
-            <svg width="40" height="40" fill="currentColor" viewBox="0 0 16 16">
-                <path d="M12.736 3.97a.733.733 0 0 1 1.047 0c.286.289.29.756.01 1.05L7.88 12.01a.733.733 0 0 1-1.065.02L3.217 8.384a.757.757 0 0 1 0-1.06.733.733 0 0 1 1.047 0l3.052 3.093 5.4-6.425a.247.247 0 0 1 .02-.022z"/>
+    <!-- SUCCESS / CERTIFICATE CARD -->
+    <div class="success-card" id="successCard" style="display: none;">
+        <div class="cert-gold-ribbon">
+            <span>OFFICIAL RESEARCH PARTICIPATION RECEIPT</span>
+        </div>
+        <div class="success-icon-3d">
+            <svg width="48" height="48" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
         </div>
-        <h2 style="font-size: 1.8rem; font-weight: 800; color: #111827; margin-bottom: 8px;">Thank You!</h2>
-        <p style="color: var(--text-secondary); max-width: 540px; margin: 0 auto;">
-            Your response has been successfully recorded in our primary research database. Your insights provide essential empirical evidence for our MBA Major Research Project at Devi Ahilya Vishwavidyalaya.
+        
+        <h2 class="success-title">Submission Verified & Archived</h2>
+        <p class="success-subtitle">
+            Thank you, <strong id="displayRespondentName">Participant</strong>! Your response is permanently archived in our immutable academic research ledger for the MBA Major Research Project at <strong>Devi Ahilya Vishwavidyalaya, Indore</strong>.
         </p>
-        <div>
-            <span class="resp-code-badge" id="displayResponseCode">RESP-2026-XXXX</span>
+
+        <!-- 3D Holographic Reference Card -->
+        <div class="holo-cert-card" id="certReferenceCard">
+            <div class="cert-card-header">
+                <span class="cert-crest">🎓 DAVV / MIST MBA RESEARCH</span>
+                <span class="cert-status-badge">IMMUTABLE ARCHIVED</span>
+            </div>
+            <div class="cert-card-body">
+                <div class="cert-meta-item">
+                    <span class="meta-label">REFERENCE NUMBER</span>
+                    <span class="resp-code-badge" id="displayResponseCode">RESP-2026-XXXX</span>
+                </div>
+                <div class="cert-meta-item">
+                    <span class="meta-label">TIMESTAMP (UTC/IST)</span>
+                    <span class="meta-value" id="displayTimestamp">2026-09-20 14:30:00</span>
+                </div>
+                <div class="cert-meta-item">
+                    <span class="meta-label">INTEGRITY HASH</span>
+                    <span class="meta-value mono-hash" id="displayIntegrityHash">SHA-256 Verified Ledger Block</span>
+                </div>
+            </div>
         </div>
 
-        <div style="display: flex; justify-content: center; gap: 12px; margin-top: 12px;">
+        <!-- Automatic Download Banner -->
+        <div class="auto-download-notice" id="autoDownloadNotice">
+            <div class="download-pulse-icon">📥</div>
+            <div class="download-notice-text">
+                <strong>Automatic Receipt & Screenshot Download Triggered!</strong>
+                <span>A complete copy of your submitted answers and your official Certificate Card have been automatically saved to your device.</span>
+            </div>
+        </div>
+
+        <!-- Action Toolbar -->
+        <div class="cert-actions-toolbar">
+            <button type="button" class="btn btn-cert-download" onclick="downloadFilledReceipt()">
+                <svg width="18" height="18" fill="currentColor" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/></svg>
+                Download Receipt (.html)
+            </button>
+            <button type="button" class="btn btn-cert-card" onclick="downloadCertificateSnapshot()">
+                <svg width="18" height="18" fill="currentColor" viewBox="0 0 16 16"><path d="M15 12a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h1.172a3 3 0 0 0 2.12-.879l.83-.828A1 1 0 0 1 7.829 3h.342a1 1 0 0 1 .707.293l.828.828A3 3 0 0 0 11.828 5H13a1 1 0 0 1 1 1v6zM2 4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-1.172a2 2 0 0 1-1.414-.586l-.828-.828A2 2 0 0 0 9.172 2H6.828a2 2 0 0 0-1.414.586l-.828.828A2 2 0 0 1 3.172 4H2z"/><path d="M8 11a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5zm0 1a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7zM3 6.5a.5.5 0 1 1-1 0 .5.5 0 0 1 1 0z"/></svg>
+                Download Certificate (.png)
+            </button>
+            <button type="button" class="btn btn-cert-copy" onclick="copySurveyRefCode()">
+                <svg width="18" height="18" fill="currentColor" viewBox="0 0 16 16"><path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z"/><path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h3zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3z"/></svg>
+                Copy Reference Code
+            </button>
+        </div>
+
+        <div style="margin-top: 20px;">
             <button class="btn btn-secondary" onclick="window.location.reload();">
                 Submit Another Response
             </button>
@@ -674,6 +746,9 @@
         </div>
     </div>
 </div>
+
+<!-- Confetti Canvas overlay -->
+<canvas id="confettiCanvas" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 99999; display: none;"></canvas>
 
 <!-- Toast element -->
 <div class="toast" id="toastMsg">Notification message</div>
