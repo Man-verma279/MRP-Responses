@@ -42,14 +42,7 @@ let SQL = null;
 
 // Initialize Database Engine
 async function getDb() {
-    if (dbInstance)     // Sync any live submissions from cloud store into SQLite
-    try {
-        await syncCloudSubmissionsIntoSqlite(dbInstance);
-    } catch (syncErr) {
-        console.warn('[DB] Sync warning:', syncErr.message);
-    }
-
-    return dbInstance;
+    if (dbInstance) return dbInstance;
 
     // 1. Initialize sql.js WASM engine
     if (!SQL) {
@@ -141,6 +134,13 @@ async function getDb() {
         }
     } catch (e) {
         // Safe check
+    }
+
+    // 6. Sync any live submissions from cloud store into SQLite
+    try {
+        await syncCloudSubmissionsIntoSqlite(dbInstance);
+    } catch (syncErr) {
+        console.warn('[DB] Sync warning:', syncErr.message);
     }
 
     return dbInstance;
