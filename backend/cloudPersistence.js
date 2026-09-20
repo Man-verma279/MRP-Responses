@@ -6,11 +6,35 @@
 // ==============================================================================
 
 const https = require('https');
+const fs = require('fs');
+const path = require('path');
 
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN || ['ghp', '_', 'icZOQTR7U8', 'f9IRq7W8bt', '7Pz2z3q85D0xxffG'].join('');
 const REPO_OWNER = 'Man-verma279';
 const REPO_NAME = 'MRP-Responses';
 const FILE_PATH = 'data/live_submissions.json';
+const LOCAL_LIVE_FILE = path.join(__dirname, '../data/live_submissions.json');
+
+function writeLocalBackup(submissions) {
+    try {
+        const dir = path.dirname(LOCAL_LIVE_FILE);
+        if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+        fs.writeFileSync(LOCAL_LIVE_FILE, JSON.stringify(submissions, null, 2), 'utf8');
+    } catch (e) {
+        // Read-only filesystem in serverless
+    }
+}
+
+function readLocalBackup() {
+    try {
+        if (fs.existsSync(LOCAL_LIVE_FILE)) {
+            const content = fs.readFileSync(LOCAL_LIVE_FILE, 'utf8');
+            const parsed = JSON.parse(content);
+            return Array.isArray(parsed) ? parsed : [];
+        }
+    } catch (e) {}
+    return [];
+}
 
 // Helper for GitHub API requests
 function githubRequest(method, endpoint, body = null) {
@@ -58,12 +82,17 @@ async function fetchCloudSubmissions() {
         if (res.status === 200 && res.data.content) {
             const decoded = Buffer.from(res.data.content, 'base64').toString('utf8');
             const submissions = JSON.parse(decoded);
-            return { sha: res.data.sha, submissions: Array.isArray(submissions) ? submissions : [] };
+            const list = Array.isArray(submissions) ? submissions : [];
+            writeLocalBackup(list);
+            return { sha: res.data.sha, submissions: list };
         }
-        return { sha: null, submissions: [] };
+        // Fallback to local backup if GitHub returns 404 or other status
+        const localList = readLocalBackup();
+        return { sha: null, submissions: localList };
     } catch (err) {
-        console.warn('[CLOUD-SYNC] Failed to fetch cloud submissions:', err.message);
-        return { sha: null, submissions: [] };
+        console.warn('[CLOUD-SYNC] Failed to fetch cloud submissions, using local backup:', err.message);
+        const localList = readLocalBackup();
+        return { sha: null, submissions: localList };
     }
 }
 
@@ -86,6 +115,8 @@ async function persistSubmissionToCloud(responseRecord) {
         } else {
             submissions.push(recordToSave);
         }
+
+        writeLocalBackup(submissions);
 
         const payload = {
             message: `Store research response ${code || 'new'} [skip ci]`,
@@ -130,6 +161,8 @@ async function updateSubmissionInCloud(responseRecord) {
         } else {
             submissions.push(updatedRecord);
         }
+
+        writeLocalBackup(submissions);
 
         const payload = {
             message: `Update research response ${code || id} [skip ci]`,
@@ -177,6 +210,8 @@ async function deleteSubmissionFromCloud(responseCode, responseUuid = null) {
         } else {
             submissions.push(tombstone);
         }
+
+        writeLocalBackup(submissions);
 
         const payload = {
             message: `Delete research response ${code} [skip ci]`,
