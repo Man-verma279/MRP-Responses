@@ -8,6 +8,7 @@ const router = express.Router();
 const { v4: uuidv4 } = require('uuid');
 const { run, query } = require('../db');
 const { syncRawResponsesFiles } = require('../exportService');
+const { persistSubmissionToCloud } = require('../cloudPersistence');
 
 // Helper to determine regional flags
 function evaluateRegion(city, state) {
@@ -157,7 +158,49 @@ router.post('/responses', async (req, res) => {
 
         const runResult = await run(insertSql, insertParams);
 
-        // 4. Asynchronously synchronize Excel & CSV datasets
+        // 4. Asynchronously persist to permanent cloud store & local files
+        persistSubmissionToCloud({
+            response_uuid: uuid,
+            response_code: respCode,
+            submitted_at: submittedAt,
+            name: finalName,
+            full_name: finalName,
+            age_group: body.age_group,
+            gender: body.gender,
+            city: cityClean,
+            state: stateClean,
+            region_classification: region_classification,
+            mp_flag: mp_flag,
+            indore_flag: indore_flag,
+            occupation: body.occupation,
+            income_group: body.income_group || 'Not Specified',
+            q07_online_impulse_freq: body.q07_online_impulse_freq,
+            q08_offline_impulse_freq: body.q08_offline_impulse_freq,
+            q09_avg_unplanned_spend: body.q09_avg_unplanned_spend,
+            preferred_channel: prefChannel,
+            q10_need_for_touch: parseInt(body.q10_need_for_touch, 10),
+            q11_visual_displays: parseInt(body.q11_visual_displays, 10),
+            q12_checkout_placement: parseInt(body.q12_checkout_placement, 10),
+            q13_salesperson_advice: parseInt(body.q13_salesperson_advice, 10),
+            q14_ai_recommendations: parseInt(body.q14_ai_recommendations, 10),
+            q15_countdown_timers: parseInt(body.q15_countdown_timers, 10),
+            q16_scarcity_fomo: parseInt(body.q16_scarcity_fomo, 10),
+            q17_social_proof_reviews: parseInt(body.q17_social_proof_reviews, 10),
+            q18_push_notifications: parseInt(body.q18_push_notifications, 10),
+            q19_primary_payment_mode: payMode,
+            q20_upi_pain_reduction: parseInt(body.q20_upi_pain_reduction, 10),
+            q21_bnpl_spend_encouragement: parseInt(body.q21_bnpl_spend_encouragement, 10),
+            fintech_user_flag: fintechUser,
+            q22_online_impulse_regret: parseInt(body.q22_online_impulse_regret, 10),
+            q23_offline_satisfaction: parseInt(body.q23_offline_satisfaction, 10),
+            q24_return_exchange_freq: parseInt(body.q24_return_exchange_freq, 10),
+            q25_fake_timers_loss_of_trust: parseInt(body.q25_fake_timers_loss_of_trust, 10),
+            client_user_agent: userAgent,
+            created_at: submittedAt
+        }).catch(err => {
+            console.error('[CLOUD-SYNC] Error persisting submission:', err.message);
+        });
+
         syncRawResponsesFiles().catch(err => {
             console.error('[SYNC] Background sync failed:', err.message);
         });

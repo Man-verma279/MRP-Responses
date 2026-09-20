@@ -119,6 +119,39 @@ function validateCurrentStep() {
     return isValid;
 }
 
+
+// Validate all 6 sections before submitting to ensure no field was missed
+function validateAllSteps() {
+    for (let step = 1; step <= totalSteps; step++) {
+        const fields = requiredFieldsByStep[step] || [];
+        for (const fieldName of fields) {
+            let isFilled = false;
+            const textOrSelect = document.querySelector(`input[name="${fieldName}"][type="text"], select[name="${fieldName}"]`);
+            
+            if (textOrSelect) {
+                isFilled = textOrSelect.value.trim() !== '';
+            } else {
+                const checkedRadio = document.querySelector(`input[name="${fieldName}"]:checked`);
+                isFilled = !!checkedRadio;
+            }
+
+            if (!isFilled) {
+                currentStep = step;
+                updateProgressUI();
+                const card = document.getElementById(`card_${fieldName}`);
+                if (card) {
+                    card.classList.add('has-error');
+                    card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+                const cleanLabel = fieldName.replace(/q\d+_/g, '').replace(/_/g, ' ');
+                showToast(`Please complete Section ${step}: ${cleanLabel}`);
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
 // Clear error status as soon as participant interacts with a field
 function attachLiveInputListeners() {
     const form = document.getElementById('surveyForm');
@@ -142,9 +175,8 @@ function attachLiveInputListeners() {
 document.getElementById('surveyForm').addEventListener('submit', async (e) => {
     e.preventDefault();
 
-    // Validate final step
-    if (!validateCurrentStep()) {
-        showToast('Please answer all required questions before submitting.');
+    // Validate ALL sections before submitting
+    if (!validateAllSteps()) {
         return;
     }
 

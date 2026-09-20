@@ -9,6 +9,7 @@ const { v4: uuidv4 } = require('uuid');
 const { query, queryOne, run } = require('../db');
 const { requireAdminAuth } = require('./auth');
 const { buildExcelBuffer, buildCsvString, syncRawResponsesFiles } = require('../exportService');
+const { syncCloudSubmissionsIntoSqlite } = require('../cloudPersistence');
 
 // Helper to determine regional flags
 function evaluateRegion(city, state) {
@@ -42,6 +43,7 @@ router.use('/admin', requireAdminAuth);
 // ------------------------------------------------------------------------------
 router.get('/admin/stats', async (req, res) => {
     try {
+        try { const db = await getDb(); await syncCloudSubmissionsIntoSqlite(db); } catch (e) {}
         // Summary KPIs
         const totalRow = await queryOne("SELECT COUNT(*) AS total FROM responses WHERE is_demo = 0;");
         const totalCount = totalRow ? totalRow.total : 0;
@@ -141,6 +143,7 @@ router.get('/admin/stats', async (req, res) => {
 // ------------------------------------------------------------------------------
 router.get('/admin/responses', async (req, res) => {
     try {
+        try { const db = await getDb(); await syncCloudSubmissionsIntoSqlite(db); } catch (e) {}
         const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
         const limit = Math.max(parseInt(req.query.limit, 10) || 15, 1);
         const offset = (page - 1) * limit;

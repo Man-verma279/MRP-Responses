@@ -9,6 +9,7 @@ const path = require('path');
 const initSqlJs = require('sql.js');
 
 const isServerless = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
+const { syncCloudSubmissionsIntoSqlite } = require('./cloudPersistence');
 
 // Candidate locations for database file
 const BUNDLED_DB_LOCATIONS = [
@@ -41,7 +42,14 @@ let SQL = null;
 
 // Initialize Database Engine
 async function getDb() {
-    if (dbInstance) return dbInstance;
+    if (dbInstance)     // Sync any live submissions from cloud store into SQLite
+    try {
+        await syncCloudSubmissionsIntoSqlite(dbInstance);
+    } catch (syncErr) {
+        console.warn('[DB] Sync warning:', syncErr.message);
+    }
+
+    return dbInstance;
 
     // 1. Initialize sql.js WASM engine
     if (!SQL) {
