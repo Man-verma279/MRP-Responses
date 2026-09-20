@@ -205,6 +205,14 @@ document.getElementById('surveyForm').addEventListener('submit', async (e) => {
     submitText.style.display = 'none';
     spinner.style.display = 'inline-block';
 
+    // Backup submission payload in localStorage before network flight
+    try {
+        localStorage.setItem('mrp_pending_submission', JSON.stringify({
+            payload: payload,
+            timestamp: new Date().toISOString()
+        }));
+    } catch (storageErr) {}
+
     try {
         const res = await fetch(`${API_BASE}/api/responses`, {
             method: 'POST',
@@ -215,6 +223,16 @@ document.getElementById('surveyForm').addEventListener('submit', async (e) => {
         const data = await res.json();
 
         if (res.ok && data.success) {
+            // Confirm persistent storage on client
+            try {
+                localStorage.setItem('mrp_confirmed_submission', JSON.stringify({
+                    payload: payload,
+                    response_id: data.response_id,
+                    timestamp: new Date().toISOString()
+                }));
+                localStorage.removeItem('mrp_pending_submission');
+            } catch (e) {}
+
             // Show Success Card
             document.getElementById('surveyForm').style.display = 'none';
             document.getElementById('progressContainer').style.display = 'none';
@@ -234,7 +252,7 @@ document.getElementById('surveyForm').addEventListener('submit', async (e) => {
         }
     } catch (err) {
         console.error('Submission error:', err);
-        showToast('Network error while connecting to research server. Please try again.');
+        showToast('Network error while saving response. Your answers are preserved. Please click Submit again.');
         btnSubmit.disabled = false;
         btnBack.disabled = false;
         submitText.style.display = 'inline-block';

@@ -6,9 +6,9 @@
 const express = require('express');
 const router = express.Router();
 const { v4: uuidv4 } = require('uuid');
-const { run, query } = require('../db');
+const { run, query, queryOne, getDb, persistToFile } = require('../db');
 const { syncRawResponsesFiles } = require('../exportService');
-const { persistSubmissionToCloud } = require('../cloudPersistence');
+const { persistSubmissionToCloud, syncCloudSubmissionsIntoSqlite } = require('../cloudPersistence');
 
 // Helper to determine regional flags
 function evaluateRegion(city, state) {
@@ -102,12 +102,37 @@ router.post('/responses', async (req, res) => {
         const payMode = String(body.q19_primary_payment_mode);
         const fintechUser = (payMode.includes('UPI') || payMode.includes('BNPL')) ? 1 : 0;
 
-        // Generate unique UUID and readable response code
+        function clampLikert(val, def = 3) {
+            const n = parseInt(val, 10);
+            if (isNaN(n) || n < 1) return 1;
+            if (n > 5) return 5;
+            return n;
+        }
+
+        // 2. Synchronize existing cloud submissions so response code calculation is 100% accurate
+        try {
+            const db = await getDb();
+            await syncCloudSubmissionsIntoSqlite(db, true);
+        } catch (syncErr) {
+            console.warn('[SURVEY] Pre-submission sync warning:', syncErr.message);
+        }
+
+        // Generate unique UUID and readable collision-free response code
         const uuid = uuidv4();
-        const countRes = await query("SELECT COUNT(*) AS total FROM responses;");
-        const nextNum = (countRes[0] ? countRes[0].total : 0) + 1;
-        const respCode = 'RESP-2026-' + nextNum.toString().padStart(4, '0');
         const submittedAt = new Date().toISOString();
+
+        const maxCodeRow = await queryOne(`
+            SELECT MAX(CAST(SUBSTR(response_code, 11) AS INTEGER)) AS maxNum 
+            FROM responses 
+            WHERE response_code LIKE 'RESP-2026-%';
+        `);
+        let nextNum = Math.max(206, (maxCodeRow && maxCodeRow.maxNum ? maxCodeRow.maxNum : 206)) + 1;
+        let respCode = 'RESP-2026-' + nextNum.toString().padStart(4, '0');
+
+        while (await queryOne("SELECT id FROM responses WHERE response_code = ?;", [respCode])) {
+            nextNum++;
+            respCode = 'RESP-2026-' + nextNum.toString().padStart(4, '0');
+        }
 
         // 3. Store Real Response in SQLite
         const insertSql = `
@@ -144,22 +169,47 @@ router.post('/responses', async (req, res) => {
             finalName, finalName, body.age_group, body.gender, cityClean, stateClean, region_classification, mp_flag, indore_flag,
             body.occupation, body.income_group || 'Not Specified',
             body.q07_online_impulse_freq, body.q08_offline_impulse_freq, body.q09_avg_unplanned_spend, prefChannel,
-            parseInt(body.q10_need_for_touch, 10), parseInt(body.q11_visual_displays, 10),
-            parseInt(body.q12_checkout_placement, 10), parseInt(body.q13_salesperson_advice, 10),
-            parseInt(body.q14_ai_recommendations, 10), parseInt(body.q15_countdown_timers, 10),
-            parseInt(body.q16_scarcity_fomo, 10), parseInt(body.q17_social_proof_reviews, 10),
-            parseInt(body.q18_push_notifications, 10), payMode,
-            parseInt(body.q20_upi_pain_reduction, 10), parseInt(body.q21_bnpl_spend_encouragement, 10),
-            fintechUser, parseInt(body.q22_online_impulse_regret, 10),
-            parseInt(body.q23_offline_satisfaction, 10), parseInt(body.q24_return_exchange_freq, 10),
-            parseInt(body.q25_fake_timers_loss_of_trust, 10),
+            clampLikert(body.q10_need_for_touch), clampLikert(body.q11_visual_displays),
+            clampLikert(body.q12_checkout_placement), clampLikert(body.q13_salesperson_advice),
+            clampLikert(body.q14_ai_recommendations), clampLikert(body.q15_countdown_timers),
+            clampLikert(body.q16_scarcity_fomo), clampLikert(body.q17_social_proof_reviews),
+            clampLikert(body.q18_push_notifications), payMode,
+            clampLikert(body.q20_upi_pain_reduction), clampLikert(body.q21_bnpl_spend_encouragement),
+            fintechUser, clampLikert(body.q22_online_impulse_regret),
+            clampLikert(body.q23_offline_satisfaction), clampLikert(body.q24_return_exchange_freq, 2),
+            clampLikert(body.q25_fake_timers_loss_of_trust, 4),
             userAgent, submittedAt
         ];
 
-        const runResult = await run(insertSql, insertParams);
+        let runResult = null;
+        let inserted = false;
+        let insertAttempts = 0;
 
-        // 4. Asynchronously persist to permanent cloud store & local files
-        persistSubmissionToCloud({
+        while (!inserted && insertAttempts < 5) {
+            insertAttempts++;
+            try {
+                insertParams[1] = respCode;
+                runResult = await run(insertSql, insertParams);
+                inserted = true;
+            } catch (insertErr) {
+                if (insertErr.message && insertErr.message.includes('UNIQUE constraint failed')) {
+                    nextNum++;
+                    respCode = 'RESP-2026-' + nextNum.toString().padStart(4, '0');
+                    console.warn(`[SURVEY] Response code collision caught, retrying with: ${respCode}`);
+                } else {
+                    throw insertErr;
+                }
+            }
+        }
+        if (!inserted) {
+            throw new Error('Could not assign a unique response code after multiple attempts.');
+        }
+
+        persistToFile();
+
+        // 4. Construct record and CRITICAL: AWAIT permanent cloud persistence before responding!
+        // In Vercel serverless, returning early terminates the execution environment and kills un-awaited requests!
+        const recordToSave = {
             response_uuid: uuid,
             response_code: respCode,
             submitted_at: submittedAt,
@@ -178,34 +228,43 @@ router.post('/responses', async (req, res) => {
             q08_offline_impulse_freq: body.q08_offline_impulse_freq,
             q09_avg_unplanned_spend: body.q09_avg_unplanned_spend,
             preferred_channel: prefChannel,
-            q10_need_for_touch: parseInt(body.q10_need_for_touch, 10),
-            q11_visual_displays: parseInt(body.q11_visual_displays, 10),
-            q12_checkout_placement: parseInt(body.q12_checkout_placement, 10),
-            q13_salesperson_advice: parseInt(body.q13_salesperson_advice, 10),
-            q14_ai_recommendations: parseInt(body.q14_ai_recommendations, 10),
-            q15_countdown_timers: parseInt(body.q15_countdown_timers, 10),
-            q16_scarcity_fomo: parseInt(body.q16_scarcity_fomo, 10),
-            q17_social_proof_reviews: parseInt(body.q17_social_proof_reviews, 10),
-            q18_push_notifications: parseInt(body.q18_push_notifications, 10),
+            q10_need_for_touch: clampLikert(body.q10_need_for_touch),
+            q11_visual_displays: clampLikert(body.q11_visual_displays),
+            q12_checkout_placement: clampLikert(body.q12_checkout_placement),
+            q13_salesperson_advice: clampLikert(body.q13_salesperson_advice),
+            q14_ai_recommendations: clampLikert(body.q14_ai_recommendations),
+            q15_countdown_timers: clampLikert(body.q15_countdown_timers),
+            q16_scarcity_fomo: clampLikert(body.q16_scarcity_fomo),
+            q17_social_proof_reviews: clampLikert(body.q17_social_proof_reviews),
+            q18_push_notifications: clampLikert(body.q18_push_notifications),
             q19_primary_payment_mode: payMode,
-            q20_upi_pain_reduction: parseInt(body.q20_upi_pain_reduction, 10),
-            q21_bnpl_spend_encouragement: parseInt(body.q21_bnpl_spend_encouragement, 10),
+            q20_upi_pain_reduction: clampLikert(body.q20_upi_pain_reduction),
+            q21_bnpl_spend_encouragement: clampLikert(body.q21_bnpl_spend_encouragement),
             fintech_user_flag: fintechUser,
-            q22_online_impulse_regret: parseInt(body.q22_online_impulse_regret, 10),
-            q23_offline_satisfaction: parseInt(body.q23_offline_satisfaction, 10),
-            q24_return_exchange_freq: parseInt(body.q24_return_exchange_freq, 10),
-            q25_fake_timers_loss_of_trust: parseInt(body.q25_fake_timers_loss_of_trust, 10),
+            q22_online_impulse_regret: clampLikert(body.q22_online_impulse_regret),
+            q23_offline_satisfaction: clampLikert(body.q23_offline_satisfaction),
+            q24_return_exchange_freq: clampLikert(body.q24_return_exchange_freq, 2),
+            q25_fake_timers_loss_of_trust: clampLikert(body.q25_fake_timers_loss_of_trust, 4),
             client_user_agent: userAgent,
             created_at: submittedAt
-        }).catch(err => {
-            console.error('[CLOUD-SYNC] Error persisting submission:', err.message);
-        });
+        };
 
-        syncRawResponsesFiles().catch(err => {
-            console.error('[SYNC] Background sync failed:', err.message);
-        });
+        try {
+            const cloudPersistOk = await persistSubmissionToCloud(recordToSave);
+            if (!cloudPersistOk) {
+                console.warn(`[SURVEY] Warning: Cloud persistence could not confirm GitHub commit for ${respCode}`);
+            }
+        } catch (cloudErr) {
+            console.error('[SURVEY] Cloud persistence error:', cloudErr.message);
+        }
 
-        console.log(`[SURVEY] New real response accepted: ${respCode} (RowID: ${runResult.lastInsertRowid})`);
+        try {
+            await syncRawResponsesFiles();
+        } catch (syncErr) {
+            console.warn('[SURVEY] Export files sync warning:', syncErr.message);
+        }
+
+        console.log(`[SURVEY] New real response permanently saved: ${respCode} (RowID: ${runResult ? runResult.lastInsertRowid : 'unknown'})`);
 
         return res.status(201).json({
             success: true,

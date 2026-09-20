@@ -96,143 +96,174 @@ async function fetchCloudSubmissions() {
     }
 }
 
+// Helper: execute operation with exponential backoff retry on conflict (HTTP 409)
+async function executeWithRetry(operationFn, maxRetries = 4, delayMs = 300) {
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+            const success = await operationFn(attempt);
+            if (success) return true;
+        } catch (e) {
+            console.warn(`[CLOUD-SYNC] Attempt ${attempt} encountered error:`, e.message);
+        }
+        if (attempt < maxRetries) {
+            await new Promise(r => setTimeout(r, delayMs * attempt));
+        }
+    }
+    return false;
+}
+
 // Save a new submission permanently to the cloud store
 async function persistSubmissionToCloud(responseRecord) {
-    try {
-        const { sha, submissions } = await fetchCloudSubmissions();
-        const code = responseRecord.response_code;
-        const uuid = responseRecord.response_uuid;
+    return executeWithRetry(async (attempt) => {
+        try {
+            const { sha, submissions } = await fetchCloudSubmissions();
+            const code = responseRecord.response_code;
+            const uuid = responseRecord.response_uuid;
 
-        const idx = submissions.findIndex(s => 
-            (code && s.response_code === code) ||
-            (uuid && s.response_uuid === uuid)
-        );
+            const idx = submissions.findIndex(s => 
+                (code && s.response_code === code) ||
+                (uuid && s.response_uuid === uuid)
+            );
 
-        const recordToSave = { ...responseRecord, is_deleted: false };
+            const recordToSave = { ...responseRecord, is_deleted: false };
 
-        if (idx !== -1) {
-            submissions[idx] = recordToSave;
-        } else {
-            submissions.push(recordToSave);
-        }
+            if (idx !== -1) {
+                submissions[idx] = recordToSave;
+            } else {
+                submissions.push(recordToSave);
+            }
 
-        writeLocalBackup(submissions);
+            writeLocalBackup(submissions);
 
-        const payload = {
-            message: `Store research response ${code || 'new'} [skip ci]`,
-            content: Buffer.from(JSON.stringify(submissions, null, 2)).toString('base64')
-        };
-        if (sha) {
-            payload.sha = sha;
-        }
+            const payload = {
+                message: `Store research response ${code || 'new'} [skip ci]`,
+                content: Buffer.from(JSON.stringify(submissions, null, 2)).toString('base64')
+            };
+            if (sha) {
+                payload.sha = sha;
+            }
 
-        const putRes = await githubRequest('PUT', `/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`, payload);
-        if (putRes.status === 200 || putRes.status === 201) {
-            console.log(`[CLOUD-SYNC] Successfully persisted ${code} to cloud store.`);
-            return true;
-        } else {
-            console.error('[CLOUD-SYNC] Error saving to cloud store:', putRes.status, putRes.data);
+            const putRes = await githubRequest('PUT', `/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`, payload);
+            if (putRes.status === 200 || putRes.status === 201) {
+                console.log(`[CLOUD-SYNC] Successfully persisted ${code} to cloud store.`);
+                return true;
+            } else if (putRes.status === 409) {
+                console.warn(`[CLOUD-SYNC] 409 Conflict persisting ${code} on attempt ${attempt}, retrying with updated SHA...`);
+                return false;
+            } else {
+                console.error('[CLOUD-SYNC] Error saving to cloud store:', putRes.status, putRes.data);
+                return false;
+            }
+        } catch (err) {
+            console.error('[CLOUD-SYNC] Exception saving to cloud store:', err.message);
             return false;
         }
-    } catch (err) {
-        console.error('[CLOUD-SYNC] Exception saving to cloud store:', err.message);
-        return false;
-    }
+    }, 4, 350);
 }
 
 // Update an existing submission permanently in the cloud store
 async function updateSubmissionInCloud(responseRecord) {
-    try {
-        const { sha, submissions } = await fetchCloudSubmissions();
-        const code = responseRecord.response_code;
-        const uuid = responseRecord.response_uuid;
-        const id = responseRecord.id;
+    return executeWithRetry(async (attempt) => {
+        try {
+            const { sha, submissions } = await fetchCloudSubmissions();
+            const code = responseRecord.response_code;
+            const uuid = responseRecord.response_uuid;
+            const id = responseRecord.id;
 
-        const idx = submissions.findIndex(s => 
-            (code && s.response_code === code) ||
-            (uuid && s.response_uuid === uuid) ||
-            (id && s.id === id)
-        );
+            const idx = submissions.findIndex(s => 
+                (code && s.response_code === code) ||
+                (uuid && s.response_uuid === uuid) ||
+                (id && s.id === id)
+            );
 
-        const updatedRecord = { ...responseRecord, is_deleted: false, updated_at: new Date().toISOString() };
+            const updatedRecord = { ...responseRecord, is_deleted: false, updated_at: new Date().toISOString() };
 
-        if (idx !== -1) {
-            submissions[idx] = { ...submissions[idx], ...updatedRecord };
-        } else {
-            submissions.push(updatedRecord);
-        }
+            if (idx !== -1) {
+                submissions[idx] = { ...submissions[idx], ...updatedRecord };
+            } else {
+                submissions.push(updatedRecord);
+            }
 
-        writeLocalBackup(submissions);
+            writeLocalBackup(submissions);
 
-        const payload = {
-            message: `Update research response ${code || id} [skip ci]`,
-            content: Buffer.from(JSON.stringify(submissions, null, 2)).toString('base64')
-        };
-        if (sha) {
-            payload.sha = sha;
-        }
+            const payload = {
+                message: `Update research response ${code || id} [skip ci]`,
+                content: Buffer.from(JSON.stringify(submissions, null, 2)).toString('base64')
+            };
+            if (sha) {
+                payload.sha = sha;
+            }
 
-        const putRes = await githubRequest('PUT', `/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`, payload);
-        if (putRes.status === 200 || putRes.status === 201) {
-            console.log(`[CLOUD-SYNC] Successfully updated ${code || id} in cloud store.`);
-            return true;
-        } else {
-            console.error('[CLOUD-SYNC] Error updating in cloud store:', putRes.status, putRes.data);
+            const putRes = await githubRequest('PUT', `/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`, payload);
+            if (putRes.status === 200 || putRes.status === 201) {
+                console.log(`[CLOUD-SYNC] Successfully updated ${code || id} in cloud store.`);
+                return true;
+            } else if (putRes.status === 409) {
+                console.warn(`[CLOUD-SYNC] 409 Conflict updating ${code || id} on attempt ${attempt}, retrying with updated SHA...`);
+                return false;
+            } else {
+                console.error('[CLOUD-SYNC] Error updating in cloud store:', putRes.status, putRes.data);
+                return false;
+            }
+        } catch (err) {
+            console.error('[CLOUD-SYNC] Exception updating in cloud store:', err.message);
             return false;
         }
-    } catch (err) {
-        console.error('[CLOUD-SYNC] Exception updating in cloud store:', err.message);
-        return false;
-    }
+    }, 4, 350);
 }
 
 // Delete a submission permanently from the cloud store using tombstone
 async function deleteSubmissionFromCloud(responseCode, responseUuid = null) {
-    try {
-        const { sha, submissions } = await fetchCloudSubmissions();
-        const code = responseCode;
-        const uuid = responseUuid;
+    return executeWithRetry(async (attempt) => {
+        try {
+            const { sha, submissions } = await fetchCloudSubmissions();
+            const code = responseCode;
+            const uuid = responseUuid;
 
-        const idx = submissions.findIndex(s => 
-            (code && s.response_code === code) ||
-            (uuid && s.response_uuid === uuid)
-        );
+            const idx = submissions.findIndex(s => 
+                (code && s.response_code === code) ||
+                (uuid && s.response_uuid === uuid)
+            );
 
-        const tombstone = {
-            response_code: code,
-            response_uuid: uuid || (idx !== -1 ? submissions[idx].response_uuid : null),
-            is_deleted: true,
-            deleted_at: new Date().toISOString()
-        };
+            const tombstone = {
+                response_code: code,
+                response_uuid: uuid || (idx !== -1 ? submissions[idx].response_uuid : null),
+                is_deleted: true,
+                deleted_at: new Date().toISOString()
+            };
 
-        if (idx !== -1) {
-            submissions[idx] = tombstone;
-        } else {
-            submissions.push(tombstone);
-        }
+            if (idx !== -1) {
+                submissions[idx] = tombstone;
+            } else {
+                submissions.push(tombstone);
+            }
 
-        writeLocalBackup(submissions);
+            writeLocalBackup(submissions);
 
-        const payload = {
-            message: `Delete research response ${code} [skip ci]`,
-            content: Buffer.from(JSON.stringify(submissions, null, 2)).toString('base64')
-        };
-        if (sha) {
-            payload.sha = sha;
-        }
+            const payload = {
+                message: `Delete research response ${code} [skip ci]`,
+                content: Buffer.from(JSON.stringify(submissions, null, 2)).toString('base64')
+            };
+            if (sha) {
+                payload.sha = sha;
+            }
 
-        const putRes = await githubRequest('PUT', `/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`, payload);
-        if (putRes.status === 200 || putRes.status === 201) {
-            console.log(`[CLOUD-SYNC] Successfully recorded deletion for ${code} in cloud store.`);
-            return true;
-        } else {
-            console.error('[CLOUD-SYNC] Error recording deletion in cloud store:', putRes.status, putRes.data);
+            const putRes = await githubRequest('PUT', `/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`, payload);
+            if (putRes.status === 200 || putRes.status === 201) {
+                console.log(`[CLOUD-SYNC] Successfully recorded deletion for ${code} in cloud store.`);
+                return true;
+            } else if (putRes.status === 409) {
+                console.warn(`[CLOUD-SYNC] 409 Conflict deleting ${code} on attempt ${attempt}, retrying with updated SHA...`);
+                return false;
+            } else {
+                console.error('[CLOUD-SYNC] Error recording deletion in cloud store:', putRes.status, putRes.data);
+                return false;
+            }
+        } catch (err) {
+            console.error('[CLOUD-SYNC] Exception deleting from cloud store:', err.message);
             return false;
         }
-    } catch (err) {
-        console.error('[CLOUD-SYNC] Exception deleting from cloud store:', err.message);
-        return false;
-    }
+    }, 4, 350);
 }
 
 // Synchronize all cloud submissions into SQLite instance
