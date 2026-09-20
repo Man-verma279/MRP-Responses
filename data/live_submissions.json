@@ -374,7 +374,7 @@
     "submitted_at": "2026-09-20T14:20:59.726Z",
     "age_group": "25 – 34 years (Working Professional / Early Career)",
     "gender": "Female",
-    "city": "Indore (Vijay Nagar)",
+    "city": "Indore (56 Dukan)",
     "state": "Madhya Pradesh",
     "region_classification": "Indore Hub",
     "mp_flag": 1,
@@ -385,7 +385,7 @@
     "q08_offline_impulse_freq": "1 to 2 times a month",
     "q09_avg_unplanned_spend": "Rs. 1,501 to Rs. 3,000",
     "preferred_channel": "Online",
-    "q10_need_for_touch": 4,
+    "q10_need_for_touch": 5,
     "q11_visual_displays": 4,
     "q12_checkout_placement": 3,
     "q13_salesperson_advice": 3,
@@ -407,8 +407,9 @@
     "client_user_agent": "Admin Dashboard",
     "ip_hash": null,
     "created_at": "2026-09-20T14:20:59.726Z",
-    "full_name": "Priya Sharma (Admin Entry)",
-    "name": "Priya Sharma (Admin Entry)",
-    "is_deleted": false
+    "full_name": "Priya Sharma Updated",
+    "name": "Priya Sharma Updated",
+    "is_deleted": false,
+    "updated_at": "2026-09-20T14:21:26.230Z"
   }
 ]
