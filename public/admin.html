@@ -450,6 +450,36 @@
     </div>
 </div>
 
+<!-- CONFIRM DELETE MODAL -->
+<div class="modal-overlay" id="deleteModal" style="display: none;">
+    <div class="modal-content" style="max-width: 460px; width: 92%;">
+        <div class="modal-header" style="border-bottom: 1px solid rgba(244, 63, 94, 0.3);">
+            <h3 class="modal-title" style="color: #F43F5E; display: flex; align-items: center; gap: 8px;">
+                <svg width="20" height="20" fill="currentColor" viewBox="0 0 16 16"><path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/><path d="M7.002 11a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 4.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 4.995z"/></svg>
+                Confirm Deletion
+            </h3>
+            <button class="modal-close" onclick="closeDeleteModal()">&times;</button>
+        </div>
+        <div class="modal-body" style="padding: 20px 24px;">
+            <p style="color: #F8FAFC; font-size: 0.95rem; line-height: 1.5; margin-bottom: 12px;">
+                Are you sure you want to permanently delete survey response <strong id="deleteTargetCode" style="color: #38BDF8; font-family: monospace;"></strong>?
+            </p>
+            <div style="background: rgba(244, 63, 94, 0.12); border: 1px solid rgba(244, 63, 94, 0.3); border-radius: 8px; padding: 12px 14px; margin-bottom: 20px; font-size: 0.82rem; color: #FECDD3; line-height: 1.45;">
+                <strong>Persistent Sync Action:</strong> This record will be deleted from SQLite, export spreadsheets will update, and a tombstone will be permanently recorded in the cloud persistence store so it is never restored on restart.
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                <button type="button" class="btn btn-outline" onclick="closeDeleteModal()">Cancel</button>
+                <button type="button" class="btn btn-primary" id="btnConfirmDelete" style="background: #F43F5E; border-color: #F43F5E;" onclick="executeDelete()">
+                    Confirm &amp; Delete
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- TOAST NOTIFICATION CONTAINER -->
+<div id="toastContainer" style="position: fixed; top: 24px; right: 24px; z-index: 99999; display: flex; flex-direction: column; gap: 10px; pointer-events: none;"></div>
+
 <script src="js/admin.js"></script>
 </body>
 </html>

@@ -680,3 +680,54 @@ tbody tr:hover {
         justify-content: center;
     }
 }
+
+/* Toast Notification Styling */
+.toast {
+    min-width: 280px;
+    max-width: 420px;
+    padding: 12px 18px;
+    border-radius: var(--radius-sm);
+    font-size: 0.88rem;
+    font-weight: 500;
+    color: #FFFFFF;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+    pointer-events: auto;
+    animation: toastSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    transition: all 0.3s ease;
+    border: 1px solid transparent;
+}
+.toast-success {
+    background: #064E3B;
+    border-color: #059669;
+    color: #A7F3D0;
+}
+.toast-error {
+    background: #4C0519;
+    border-color: #E11D48;
+    color: #FECDD3;
+}
+.toast-info {
+    background: #0C4A6E;
+    border-color: #0284C7;
+    color: #BAE6FD;
+}
+@keyframes toastSlideIn {
+    from {
+        opacity: 0;
+        transform: translateX(40px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+@keyframes toastFadeOut {
+    to {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+}

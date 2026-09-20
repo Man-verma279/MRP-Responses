@@ -138,7 +138,10 @@ async function getDb() {
 
     // 6. Sync any live submissions from cloud store into SQLite
     try {
-        await syncCloudSubmissionsIntoSqlite(dbInstance);
+        const syncRes = await syncCloudSubmissionsIntoSqlite(dbInstance);
+        if (syncRes && (syncRes.inserted > 0 || syncRes.updated > 0 || syncRes.deleted > 0)) {
+            persistToFile();
+        }
     } catch (syncErr) {
         console.warn('[DB] Sync warning:', syncErr.message);
     }

@@ -6,10 +6,22 @@
 const express = require('express');
 const router = express.Router();
 const { v4: uuidv4 } = require('uuid');
-const { query, queryOne, run } = require('../db');
+const { getDb, query, queryOne, run, persistToFile } = require('../db');
 const { requireAdminAuth } = require('./auth');
 const { buildExcelBuffer, buildCsvString, syncRawResponsesFiles } = require('../exportService');
-const { syncCloudSubmissionsIntoSqlite } = require('../cloudPersistence');
+const { 
+    syncCloudSubmissionsIntoSqlite, 
+    persistSubmissionToCloud, 
+    updateSubmissionInCloud, 
+    deleteSubmissionFromCloud 
+} = require('../cloudPersistence');
+
+// Helper to clamp Likert scale values 1 to 5
+function clampLikert(val, fallback = 3) {
+    const parsed = parseInt(val, 10);
+    if (isNaN(parsed)) return fallback;
+    return Math.max(1, Math.min(5, parsed));
+}
 
 // Helper to determine regional flags
 function evaluateRegion(city, state) {
@@ -43,7 +55,15 @@ router.use('/admin', requireAdminAuth);
 // ------------------------------------------------------------------------------
 router.get('/admin/stats', async (req, res) => {
     try {
-        try { const db = await getDb(); await syncCloudSubmissionsIntoSqlite(db); } catch (e) {}
+        try { 
+            const db = await getDb(); 
+            const syncRes = await syncCloudSubmissionsIntoSqlite(db); 
+            if (syncRes && (syncRes.inserted > 0 || syncRes.updated > 0 || syncRes.deleted > 0)) {
+                persistToFile();
+            }
+        } catch (e) {
+            console.warn('[ADMIN STATS] Cloud sync warning:', e.message);
+        }
         // Summary KPIs
         const totalRow = await queryOne("SELECT COUNT(*) AS total FROM responses WHERE is_demo = 0;");
         const totalCount = totalRow ? totalRow.total : 0;
@@ -143,7 +163,15 @@ router.get('/admin/stats', async (req, res) => {
 // ------------------------------------------------------------------------------
 router.get('/admin/responses', async (req, res) => {
     try {
-        try { const db = await getDb(); await syncCloudSubmissionsIntoSqlite(db); } catch (e) {}
+        try { 
+            const db = await getDb(); 
+            const syncRes = await syncCloudSubmissionsIntoSqlite(db); 
+            if (syncRes && (syncRes.inserted > 0 || syncRes.updated > 0 || syncRes.deleted > 0)) {
+                persistToFile();
+            }
+        } catch (e) {
+            console.warn('[ADMIN RESPONSES] Cloud sync warning:', e.message);
+        }
         const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
         const limit = Math.max(parseInt(req.query.limit, 10) || 15, 1);
         const offset = (page - 1) * limit;
@@ -250,9 +278,15 @@ router.post('/admin/responses', async (req, res) => {
         const stateClean = String(body.state || 'Madhya Pradesh').trim();
         const { mp_flag, indore_flag, region_classification } = evaluateRegion(cityClean, stateClean);
 
-        const countRes = await query("SELECT COUNT(*) AS total FROM responses;");
-        const nextNum = (countRes[0] ? countRes[0].total : 0) + 1;
-        const respCode = 'RESP-2026-' + nextNum.toString().padStart(4, '0');
+        // Calculate strictly unique response code
+        const maxRow = await queryOne("SELECT MAX(CAST(SUBSTR(response_code, 11) AS INTEGER)) AS maxNum FROM responses WHERE response_code LIKE 'RESP-2026-%';");
+        let nextNum = ((maxRow && maxRow.maxNum) ? maxRow.maxNum : 200) + 1;
+        let respCode = 'RESP-2026-' + nextNum.toString().padStart(4, '0');
+        while (await queryOne("SELECT id FROM responses WHERE response_code = ?;", [respCode])) {
+            nextNum++;
+            respCode = 'RESP-2026-' + nextNum.toString().padStart(4, '0');
+        }
+
         const uuid = uuidv4();
         const submittedAt = new Date().toISOString();
 
@@ -300,15 +334,15 @@ router.post('/admin/responses', async (req, res) => {
             cityClean, stateClean, region_classification, mp_flag, indore_flag,
             body.occupation || 'Salaried Professional / Corporate Employee', body.income_group || 'Rs. 60,001 to Rs. 1,00,000',
             onFreq, offFreq, body.q09_avg_unplanned_spend || 'Rs. 1,501 to Rs. 3,000', prefChannel,
-            parseInt(body.q10_need_for_touch || 3, 10), parseInt(body.q11_visual_displays || 3, 10),
-            parseInt(body.q12_checkout_placement || 3, 10), parseInt(body.q13_salesperson_advice || 3, 10),
-            parseInt(body.q14_ai_recommendations || 3, 10), parseInt(body.q15_countdown_timers || 3, 10),
-            parseInt(body.q16_scarcity_fomo || 3, 10), parseInt(body.q17_social_proof_reviews || 3, 10),
-            parseInt(body.q18_push_notifications || 3, 10), payMode,
-            parseInt(body.q20_upi_pain_reduction || 3, 10), parseInt(body.q21_bnpl_spend_encouragement || 3, 10),
-            fintechUser, parseInt(body.q22_online_impulse_regret || 3, 10),
-            parseInt(body.q23_offline_satisfaction || 3, 10), parseInt(body.q24_return_exchange_freq || 2, 10),
-            parseInt(body.q25_fake_timers_loss_of_trust || 4, 10),
+            clampLikert(body.q10_need_for_touch, 4), clampLikert(body.q11_visual_displays, 4),
+            clampLikert(body.q12_checkout_placement, 3), clampLikert(body.q13_salesperson_advice, 3),
+            clampLikert(body.q14_ai_recommendations, 5), clampLikert(body.q15_countdown_timers, 4),
+            clampLikert(body.q16_scarcity_fomo, 4), clampLikert(body.q17_social_proof_reviews, 5),
+            clampLikert(body.q18_push_notifications, 4), payMode,
+            clampLikert(body.q20_upi_pain_reduction, 5), clampLikert(body.q21_bnpl_spend_encouragement, 4),
+            fintechUser, clampLikert(body.q22_online_impulse_regret, 4),
+            clampLikert(body.q23_offline_satisfaction, 4), clampLikert(body.q24_return_exchange_freq, 2),
+            clampLikert(body.q25_fake_timers_loss_of_trust, 5),
             submittedAt
         ];
 
@@ -317,9 +351,16 @@ router.post('/admin/responses', async (req, res) => {
 
         const created = await queryOne("SELECT * FROM responses WHERE response_code = ?;", [respCode]);
 
+        // Cloud Persistence Sync
+        try {
+            await persistSubmissionToCloud(created);
+        } catch (cloudErr) {
+            console.error('[ADMIN ROUTE] Cloud persistence warning on create:', cloudErr.message);
+        }
+
         return res.status(201).json({
             success: true,
-            message: `Response ${respCode} created successfully.`,
+            message: `Response ${respCode} created successfully and synchronized.`,
             response: created
         });
     } catch (err) {
@@ -406,23 +447,23 @@ router.put('/admin/responses/:id', async (req, res) => {
             body.q08_offline_impulse_freq !== undefined ? body.q08_offline_impulse_freq : existing.q08_offline_impulse_freq,
             body.q09_avg_unplanned_spend !== undefined ? body.q09_avg_unplanned_spend : existing.q09_avg_unplanned_spend,
             body.preferred_channel !== undefined ? body.preferred_channel : existing.preferred_channel,
-            body.q10_need_for_touch !== undefined ? parseInt(body.q10_need_for_touch, 10) : existing.q10_need_for_touch,
-            body.q11_visual_displays !== undefined ? parseInt(body.q11_visual_displays, 10) : existing.q11_visual_displays,
-            body.q12_checkout_placement !== undefined ? parseInt(body.q12_checkout_placement, 10) : existing.q12_checkout_placement,
-            body.q13_salesperson_advice !== undefined ? parseInt(body.q13_salesperson_advice, 10) : existing.q13_salesperson_advice,
-            body.q14_ai_recommendations !== undefined ? parseInt(body.q14_ai_recommendations, 10) : existing.q14_ai_recommendations,
-            body.q15_countdown_timers !== undefined ? parseInt(body.q15_countdown_timers, 10) : existing.q15_countdown_timers,
-            body.q16_scarcity_fomo !== undefined ? parseInt(body.q16_scarcity_fomo, 10) : existing.q16_scarcity_fomo,
-            body.q17_social_proof_reviews !== undefined ? parseInt(body.q17_social_proof_reviews, 10) : existing.q17_social_proof_reviews,
-            body.q18_push_notifications !== undefined ? parseInt(body.q18_push_notifications, 10) : existing.q18_push_notifications,
+            body.q10_need_for_touch !== undefined ? clampLikert(body.q10_need_for_touch, existing.q10_need_for_touch) : existing.q10_need_for_touch,
+            body.q11_visual_displays !== undefined ? clampLikert(body.q11_visual_displays, existing.q11_visual_displays) : existing.q11_visual_displays,
+            body.q12_checkout_placement !== undefined ? clampLikert(body.q12_checkout_placement, existing.q12_checkout_placement) : existing.q12_checkout_placement,
+            body.q13_salesperson_advice !== undefined ? clampLikert(body.q13_salesperson_advice, existing.q13_salesperson_advice) : existing.q13_salesperson_advice,
+            body.q14_ai_recommendations !== undefined ? clampLikert(body.q14_ai_recommendations, existing.q14_ai_recommendations) : existing.q14_ai_recommendations,
+            body.q15_countdown_timers !== undefined ? clampLikert(body.q15_countdown_timers, existing.q15_countdown_timers) : existing.q15_countdown_timers,
+            body.q16_scarcity_fomo !== undefined ? clampLikert(body.q16_scarcity_fomo, existing.q16_scarcity_fomo) : existing.q16_scarcity_fomo,
+            body.q17_social_proof_reviews !== undefined ? clampLikert(body.q17_social_proof_reviews, existing.q17_social_proof_reviews) : existing.q17_social_proof_reviews,
+            body.q18_push_notifications !== undefined ? clampLikert(body.q18_push_notifications, existing.q18_push_notifications) : existing.q18_push_notifications,
             payMode,
-            body.q20_upi_pain_reduction !== undefined ? parseInt(body.q20_upi_pain_reduction, 10) : existing.q20_upi_pain_reduction,
-            body.q21_bnpl_spend_encouragement !== undefined ? parseInt(body.q21_bnpl_spend_encouragement, 10) : existing.q21_bnpl_spend_encouragement,
+            body.q20_upi_pain_reduction !== undefined ? clampLikert(body.q20_upi_pain_reduction, existing.q20_upi_pain_reduction) : existing.q20_upi_pain_reduction,
+            body.q21_bnpl_spend_encouragement !== undefined ? clampLikert(body.q21_bnpl_spend_encouragement, existing.q21_bnpl_spend_encouragement) : existing.q21_bnpl_spend_encouragement,
             fintechUser,
-            body.q22_online_impulse_regret !== undefined ? parseInt(body.q22_online_impulse_regret, 10) : existing.q22_online_impulse_regret,
-            body.q23_offline_satisfaction !== undefined ? parseInt(body.q23_offline_satisfaction, 10) : existing.q23_offline_satisfaction,
-            body.q24_return_exchange_freq !== undefined ? parseInt(body.q24_return_exchange_freq, 10) : existing.q24_return_exchange_freq,
-            body.q25_fake_timers_loss_of_trust !== undefined ? parseInt(body.q25_fake_timers_loss_of_trust, 10) : existing.q25_fake_timers_loss_of_trust,
+            body.q22_online_impulse_regret !== undefined ? clampLikert(body.q22_online_impulse_regret, existing.q22_online_impulse_regret) : existing.q22_online_impulse_regret,
+            body.q23_offline_satisfaction !== undefined ? clampLikert(body.q23_offline_satisfaction, existing.q23_offline_satisfaction) : existing.q23_offline_satisfaction,
+            body.q24_return_exchange_freq !== undefined ? clampLikert(body.q24_return_exchange_freq, existing.q24_return_exchange_freq) : existing.q24_return_exchange_freq,
+            body.q25_fake_timers_loss_of_trust !== undefined ? clampLikert(body.q25_fake_timers_loss_of_trust, existing.q25_fake_timers_loss_of_trust) : existing.q25_fake_timers_loss_of_trust,
             existing.id
         ];
 
@@ -431,9 +472,16 @@ router.put('/admin/responses/:id', async (req, res) => {
 
         const updated = await queryOne("SELECT * FROM responses WHERE id = ?;", [existing.id]);
 
+        // Cloud Persistence Sync
+        try {
+            await updateSubmissionInCloud(updated);
+        } catch (cloudErr) {
+            console.error('[ADMIN ROUTE] Cloud persistence warning on update:', cloudErr.message);
+        }
+
         return res.json({
             success: true,
-            message: `Response ${existing.response_code} updated successfully.`,
+            message: `Response ${existing.response_code} updated successfully and synchronized.`,
             response: updated
         });
 
@@ -444,7 +492,7 @@ router.put('/admin/responses/:id', async (req, res) => {
 });
 
 // ------------------------------------------------------------------------------
-// 6. DELETE /api/admin/responses/:id - Delete Response from SQLite
+// 6. DELETE /api/admin/responses/:id - Delete Response from SQLite & Cloud
 // ------------------------------------------------------------------------------
 router.delete('/admin/responses/:id', async (req, res) => {
     try {
@@ -461,9 +509,16 @@ router.delete('/admin/responses/:id', async (req, res) => {
         await run("DELETE FROM responses WHERE id = ?;", [existing.id]);
         await syncRawResponsesFiles();
 
+        // Cloud Persistence Sync (Tombstone so cold start doesn't resurrect it)
+        try {
+            await deleteSubmissionFromCloud(existing.response_code, existing.response_uuid);
+        } catch (cloudErr) {
+            console.error('[ADMIN ROUTE] Cloud persistence warning on delete:', cloudErr.message);
+        }
+
         return res.json({
             success: true,
-            message: `Response ${existing.response_code} deleted successfully.`,
+            message: `Response ${existing.response_code} deleted successfully and synchronized.`,
             deleted_code: existing.response_code
         });
 
