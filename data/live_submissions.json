@@ -302,8 +302,8 @@
     "response_uuid": "63b74c86-f5bb-4dad-a83f-0b457d2e8899",
     "response_code": "RESP-2026-0221",
     "submitted_at": "2026-09-20T16:05:55.981Z",
-    "name": "Live Vercel Auto-Test Participant",
-    "full_name": "Live Vercel Auto-Test Participant",
+    "name": "Live Vercel Auto-Test Participant (UPDATED)",
+    "full_name": "Live Vercel Auto-Test Participant (UPDATED)",
     "age_group": "25 – 34 years (Working Professional / Early Career)",
     "gender": "Female",
     "city": "Indore",
@@ -315,7 +315,7 @@
     "income_group": "Rs. 60,001 to Rs. 1,00,000",
     "q07_online_impulse_freq": "3 to 5 times a month",
     "q08_offline_impulse_freq": "1 to 2 times a month",
-    "q09_avg_unplanned_spend": "Rs. 1,501 to Rs. 3,000",
+    "q09_avg_unplanned_spend": "Rs. 3,001 to Rs. 5,000",
     "preferred_channel": "Hybrid",
     "q10_need_for_touch": 4,
     "q11_visual_displays": 4,
@@ -336,6 +336,11 @@
     "q25_fake_timers_loss_of_trust": 5,
     "client_user_agent": "Vercel-Live-Tester/1.0",
     "created_at": "2026-09-20T16:05:55.981Z",
-    "is_deleted": false
+    "is_deleted": false,
+    "id": 626,
+    "is_demo": 0,
+    "data_source": "LIVE_RESEARCH_PARTICIPANT",
+    "ip_hash": null,
+    "updated_at": "2026-09-20T16:06:10.112Z"
   }
 ]
