@@ -173,7 +173,7 @@ router.get('/admin/responses', async (req, res) => {
             console.warn('[ADMIN RESPONSES] Cloud sync warning:', e.message);
         }
         const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
-        const limit = Math.max(parseInt(req.query.limit, 10) || 15, 1);
+        const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 15, 1), 10000);
         const offset = (page - 1) * limit;
 
         const { q, search, state, channel, payment } = req.query;

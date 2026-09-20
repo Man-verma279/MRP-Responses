@@ -299,6 +299,11 @@ async function loadResponsesTable(page = 1) {
         const tbody = document.getElementById('responsesTableBody');
 
         if (!res.ok || !data.success || !data.responses || data.responses.length === 0) {
+            if (data.pagination && data.pagination.total > 0 && currentPage > data.pagination.totalPages) {
+                currentPage = data.pagination.totalPages;
+                loadResponsesTable(currentPage);
+                return;
+            }
             tbody.innerHTML = `
                 <tr>
                     <td colspan="11" style="text-align: center; color: var(--text-muted); padding: 36px;">
@@ -531,12 +536,66 @@ async function triggerServerSync() {
 }
 
 // ==============================================================================
-// CRUD CONTROLLERS (Create, Update, Delete in SQLite)
+// TOAST NOTIFICATION UTILITY
+// ==============================================================================
+function showToast(message, type = 'success') {
+    const container = document.getElementById('toastContainer');
+    if (!container) return;
+
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    
+    const icon = type === 'success' ? '✓' : (type === 'error' ? '✕' : 'ℹ');
+    
+    toast.innerHTML = `
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="font-weight: 700; font-size: 1rem;">${icon}</span>
+            <span>${message}</span>
+        </div>
+        <button onclick="this.parentElement.remove()" style="background: none; border: none; color: currentColor; opacity: 0.7; font-size: 1.1rem; cursor: pointer; padding: 0 4px;">&times;</button>
+    `;
+
+    container.appendChild(toast);
+
+    setTimeout(() => {
+        toast.style.animation = 'toastFadeOut 0.3s forwards';
+        setTimeout(() => toast.remove(), 300);
+    }, 4000);
+}
+
+// Helper: robust select box value matcher that handles unicode dash differences and case
+function setSelectValue(selectEl, value) {
+    if (!selectEl || value === undefined || value === null) return;
+    selectEl.value = value;
+    if (selectEl.selectedIndex === -1 || selectEl.value !== value) {
+        const cleanVal = String(value).replace(/[\u2013\u2014-]/g, '-').toLowerCase().trim();
+        for (let i = 0; i < selectEl.options.length; i++) {
+            const optVal = selectEl.options[i].value.replace(/[\u2013\u2014-]/g, '-').toLowerCase().trim();
+            if (optVal === cleanVal || optVal.includes(cleanVal) || cleanVal.includes(optVal)) {
+                selectEl.selectedIndex = i;
+                break;
+            }
+        }
+    }
+}
+
+// Global modal overlay click to dismiss
+window.addEventListener('click', (e) => {
+    const respModal = document.getElementById('responseModal');
+    const crudModal = document.getElementById('crudModal');
+    const delModal = document.getElementById('deleteModal');
+    if (e.target === respModal) closeModal();
+    if (e.target === crudModal) closeCrudModal();
+    if (e.target === delModal) closeDeleteModal();
+});
+
+// ==============================================================================
+// CRUD CONTROLLERS (Create, Read, Update, Delete in SQLite & Cloud)
 // ==============================================================================
 
 function openAddModal() {
     document.getElementById('crudEditId').value = '';
-    document.getElementById('crudModalTitle').innerText = 'Add New Survey Response to SQLite';
+    document.getElementById('crudModalTitle').innerText = 'Add New Survey Response to Database';
     document.getElementById('btnSaveCrud').innerText = 'Save to Database';
     document.getElementById('crudForm').reset();
     document.getElementById('crud_q10').value = 4;
@@ -565,7 +624,7 @@ async function openEditModal(respCode) {
         });
         const data = await res.json();
         if (!res.ok || !data.success || !data.response) {
-            alert('Failed to load response data for editing.');
+            showToast('Failed to load response data for editing.', 'error');
             return;
         }
 
@@ -575,17 +634,17 @@ async function openEditModal(respCode) {
         document.getElementById('btnSaveCrud').innerText = 'Update in Database';
 
         document.getElementById('crud_full_name').value = r.name || r.full_name || '';
-        document.getElementById('crud_age_group').value = r.age_group || '';
-        document.getElementById('crud_gender').value = r.gender || '';
+        setSelectValue(document.getElementById('crud_age_group'), r.age_group);
+        setSelectValue(document.getElementById('crud_gender'), r.gender);
         document.getElementById('crud_city').value = r.city || '';
-        document.getElementById('crud_state').value = r.state || '';
-        document.getElementById('crud_occupation').value = r.occupation || '';
-        document.getElementById('crud_income_group').value = r.income_group || '';
-        document.getElementById('crud_preferred_channel').value = r.preferred_channel || 'Online';
-        document.getElementById('crud_q07').value = r.q07_online_impulse_freq || '';
-        document.getElementById('crud_q08').value = r.q08_offline_impulse_freq || '';
-        document.getElementById('crud_q09').value = r.q09_avg_unplanned_spend || '';
-        document.getElementById('crud_q19').value = r.q19_primary_payment_mode || '';
+        setSelectValue(document.getElementById('crud_state'), r.state);
+        setSelectValue(document.getElementById('crud_occupation'), r.occupation);
+        setSelectValue(document.getElementById('crud_income_group'), r.income_group);
+        setSelectValue(document.getElementById('crud_preferred_channel'), r.preferred_channel || 'Online');
+        setSelectValue(document.getElementById('crud_q07'), r.q07_online_impulse_freq);
+        setSelectValue(document.getElementById('crud_q08'), r.q08_offline_impulse_freq);
+        setSelectValue(document.getElementById('crud_q09'), r.q09_avg_unplanned_spend);
+        setSelectValue(document.getElementById('crud_q19'), r.q19_primary_payment_mode);
 
         document.getElementById('crud_q10').value = r.q10_need_for_touch || 3;
         document.getElementById('crud_q11').value = r.q11_visual_displays || 3;
@@ -606,6 +665,7 @@ async function openEditModal(respCode) {
         document.getElementById('crudModal').style.display = 'flex';
     } catch (err) {
         console.error('Error fetching response to edit:', err);
+        showToast('Network error loading response detail.', 'error');
     }
 }
 
@@ -619,13 +679,22 @@ async function handleCrudSubmit(e) {
 
     const editId = document.getElementById('crudEditId').value.trim();
     const isEdit = Boolean(editId);
+    const saveBtn = document.getElementById('btnSaveCrud');
+    const originalBtnText = saveBtn.innerText;
+
+    // Likert input clamoing helper
+    const readLikert = (id, def = 3) => {
+        const val = parseInt(document.getElementById(id).value, 10);
+        if (isNaN(val)) return def;
+        return Math.max(1, Math.min(5, val));
+    };
 
     const payload = {
-        name: document.getElementById('crud_full_name').value.trim(),
-        full_name: document.getElementById('crud_full_name').value.trim(),
+        name: document.getElementById('crud_full_name').value.trim() || 'Anonymous Respondent',
+        full_name: document.getElementById('crud_full_name').value.trim() || 'Anonymous Respondent',
         age_group: document.getElementById('crud_age_group').value,
         gender: document.getElementById('crud_gender').value,
-        city: document.getElementById('crud_city').value.trim(),
+        city: document.getElementById('crud_city').value.trim() || 'Indore',
         state: document.getElementById('crud_state').value,
         occupation: document.getElementById('crud_occupation').value,
         income_group: document.getElementById('crud_income_group').value,
@@ -634,25 +703,28 @@ async function handleCrudSubmit(e) {
         q08_offline_impulse_freq: document.getElementById('crud_q08').value,
         q09_avg_unplanned_spend: document.getElementById('crud_q09').value,
         q19_primary_payment_mode: document.getElementById('crud_q19').value,
-        q10_need_for_touch: parseInt(document.getElementById('crud_q10').value, 10),
-        q11_visual_displays: parseInt(document.getElementById('crud_q11').value, 10),
-        q12_checkout_placement: parseInt(document.getElementById('crud_q12').value, 10),
-        q13_salesperson_advice: parseInt(document.getElementById('crud_q13').value, 10),
-        q14_ai_recommendations: parseInt(document.getElementById('crud_q14').value, 10),
-        q15_countdown_timers: parseInt(document.getElementById('crud_q15').value, 10),
-        q16_scarcity_fomo: parseInt(document.getElementById('crud_q16').value, 10),
-        q17_social_proof_reviews: parseInt(document.getElementById('crud_q17').value, 10),
-        q18_push_notifications: parseInt(document.getElementById('crud_q18').value, 10),
-        q20_upi_pain_reduction: parseInt(document.getElementById('crud_q20').value, 10),
-        q21_bnpl_spend_encouragement: parseInt(document.getElementById('crud_q21').value, 10),
-        q22_online_impulse_regret: parseInt(document.getElementById('crud_q22').value, 10),
-        q23_offline_satisfaction: parseInt(document.getElementById('crud_q23').value, 10),
-        q24_return_exchange_freq: parseInt(document.getElementById('crud_q24').value, 10),
-        q25_fake_timers_loss_of_trust: parseInt(document.getElementById('crud_q25').value, 10)
+        q10_need_for_touch: readLikert('crud_q10', 4),
+        q11_visual_displays: readLikert('crud_q11', 4),
+        q12_checkout_placement: readLikert('crud_q12', 3),
+        q13_salesperson_advice: readLikert('crud_q13', 3),
+        q14_ai_recommendations: readLikert('crud_q14', 5),
+        q15_countdown_timers: readLikert('crud_q15', 4),
+        q16_scarcity_fomo: readLikert('crud_q16', 4),
+        q17_social_proof_reviews: readLikert('crud_q17', 5),
+        q18_push_notifications: readLikert('crud_q18', 4),
+        q20_upi_pain_reduction: readLikert('crud_q20', 5),
+        q21_bnpl_spend_encouragement: readLikert('crud_q21', 4),
+        q22_online_impulse_regret: readLikert('crud_q22', 4),
+        q23_offline_satisfaction: readLikert('crud_q23', 4),
+        q24_return_exchange_freq: readLikert('crud_q24', 2),
+        q25_fake_timers_loss_of_trust: readLikert('crud_q25', 5)
     };
 
     const url = isEdit ? `/api/admin/responses/${editId}` : '/api/admin/responses';
     const method = isEdit ? 'PUT' : 'POST';
+
+    saveBtn.disabled = true;
+    saveBtn.innerText = 'Synchronizing...';
 
     try {
         const res = await fetch(`${API_BASE}${url}`, {
@@ -668,36 +740,77 @@ async function handleCrudSubmit(e) {
         if (res.ok && data.success) {
             closeCrudModal();
             loadDashboardData(true);
-            alert(isEdit ? `Response ${editId} successfully updated in SQLite and files synchronized!` : 'New response created and synchronized!');
+            showToast(data.message || (isEdit ? `Response ${editId} updated!` : 'New response created and synced!'), 'success');
         } else {
-            alert('Failed to save response: ' + (data.error || 'Unknown error'));
+            showToast('Failed to save response: ' + (data.error || 'Unknown error'), 'error');
         }
     } catch (err) {
         console.error('CRUD submit error:', err);
-        alert('Network error saving response to SQLite.');
+        showToast('Network error synchronizing response.', 'error');
+    } finally {
+        saveBtn.disabled = false;
+        saveBtn.innerText = originalBtnText;
     }
 }
 
-async function deleteResponse(respCode) {
+// Delete Confirmation Flow
+let pendingDeleteCode = null;
+
+function deleteResponse(respCode) {
     if (!adminToken) return;
-    const ok = confirm(`Are you sure you want to permanently delete response ${respCode} from the SQLite database? This will update the dataset and Excel/CSV files.`);
-    if (!ok) return;
+    pendingDeleteCode = respCode;
+    const targetEl = document.getElementById('deleteTargetCode');
+    if (targetEl) targetEl.innerText = respCode;
+    
+    const delModal = document.getElementById('deleteModal');
+    if (delModal) {
+        delModal.style.display = 'flex';
+    } else {
+        // Fallback to confirm
+        if (confirm(`Are you sure you want to permanently delete response ${respCode}?`)) {
+            executeDelete();
+        }
+    }
+}
+
+function closeDeleteModal() {
+    pendingDeleteCode = null;
+    const delModal = document.getElementById('deleteModal');
+    if (delModal) delModal.style.display = 'none';
+}
+
+async function executeDelete() {
+    if (!adminToken || !pendingDeleteCode) return;
+    const code = pendingDeleteCode;
+    const btn = document.getElementById('btnConfirmDelete');
+    if (btn) {
+        btn.disabled = true;
+        btn.innerText = 'Deleting & Syncing...';
+    }
 
     try {
-        const res = await fetch(`${API_BASE}/api/admin/responses/${respCode}`, {
+        const res = await fetch(`${API_BASE}/api/admin/responses/${code}`, {
             method: 'DELETE',
             headers: { 'Authorization': `Bearer ${adminToken}` }
         });
 
         const data = await res.json();
+        closeDeleteModal();
+
         if (res.ok && data.success) {
             loadDashboardData(true);
-            alert(`Response ${respCode} deleted and exports updated.`);
+            showToast(data.message || `Response ${code} deleted successfully.`, 'success');
         } else {
-            alert('Failed to delete response: ' + (data.error || 'Unknown error'));
+            showToast('Failed to delete response: ' + (data.error || 'Unknown error'), 'error');
         }
     } catch (err) {
         console.error('Delete request error:', err);
-        alert('Network error deleting response.');
+        showToast('Network error deleting response.', 'error');
+        closeDeleteModal();
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerText = 'Confirm & Delete';
+        }
     }
 }

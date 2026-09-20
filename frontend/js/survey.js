@@ -787,21 +787,34 @@ document.getElementById('surveyForm').addEventListener('submit', async (e) => {
 
             window.scrollTo({ top: 0, behavior: 'smooth' });
 
+            // Display Rendered Certificate Snapshot on Screen immediately
+            try {
+                const certDataUrl = generateCertificateCanvas(payload, respCode, submittedAt, hash);
+                const certImgEl = document.getElementById('renderedCertImg');
+                const certWrapper = document.getElementById('certImagePreviewWrapper');
+                if (certImgEl && certWrapper) {
+                    certImgEl.src = certDataUrl;
+                    certWrapper.style.display = 'block';
+                }
+            } catch (canvasErr) {
+                console.warn('Canvas preview error:', canvasErr);
+            }
+
             // Launch Celebration Confetti
             launchConfetti();
 
-            // AUTONOMOUS DUAL DOWNLOAD TRIGGER:
-            // 1. Auto-download complete filled form summary receipt (.html)
-            setTimeout(() => {
-                downloadFilledReceipt();
-            }, 500);
-
-            // 2. Auto-download official 3D Certificate & Reference Card snapshot (.png)
+            // AUTONOMOUS DOWNLOAD TRIGGERS:
+            // 1. Auto-download official high-res Certificate & Reference Card snapshot (.png) FIRST!
             setTimeout(() => {
                 downloadCertificateSnapshot();
-            }, 1200);
+            }, 300);
 
-            showToast(`Submission verified! Reference: ${respCode}. Your receipt & certificate card have been saved.`);
+            // 2. Auto-download complete filled form summary receipt (.html)
+            setTimeout(() => {
+                downloadFilledReceipt();
+            }, 1400);
+
+            showToast(`Submission verified! Reference: ${respCode}. Your certificate image (.png) and receipt (.html) have been downloaded.`);
 
         } else {
             showToast(data.error || 'Submission failed. Please check your answers.');
