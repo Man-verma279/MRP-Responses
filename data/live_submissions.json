@@ -232,7 +232,7 @@
     "name": "Man Machya",
     "full_name": "Man Machya",
     "age_group": "25 – 34 years (Working Professional / Early Career)",
-    "gender": "Female",
+    "gender": "Male",
     "city": "Indore (Vijay Nagar)",
     "state": "Madhya Pradesh",
     "region_classification": "Indore Hub",
@@ -263,7 +263,12 @@
     "q25_fake_timers_loss_of_trust": 5,
     "client_user_agent": "Unknown",
     "created_at": "2026-09-20T14:20:53.836Z",
-    "is_deleted": false
+    "is_deleted": false,
+    "id": 623,
+    "is_demo": 0,
+    "data_source": "LIVE_RESEARCH_PARTICIPANT",
+    "ip_hash": null,
+    "updated_at": "2026-09-20T14:58:28.527Z"
   },
   {
     "response_code": "RESP-2026-0216",
